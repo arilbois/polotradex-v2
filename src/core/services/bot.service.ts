@@ -37,7 +37,26 @@ export class BotService {
     if (this.currentPosition) {
       await this.telegramService.sendMessage(`✅ *Bot Resumed*\nFound active position for ${this.currentPosition.symbol}. Resuming monitoring.`);
     } else {
-      await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
+      // [DIPERBAIKI] Kirim notifikasi yang lebih informatif
+      try {
+        const config = await this.configService.getCurrentConfig();
+        const symbol = config.tradingSymbol;
+        const currentPrice = await this.tradingService.getCurrentPrice(symbol);
+        const initialSignal = await this.tradingService.getTradingSignal(symbol);
+
+        const message = `✅ *Bot Started*\n\n` +
+                        `*Symbol:* ${symbol}\n` +
+                        `*Strategy:* ${config.strategyName}\n` +
+                        `*Status:* Waiting for BUY signal\n` +
+                        `*Current Price:* ${currentPrice.toFixed(4)}\n` +
+                        `*Initial Reason:* _${initialSignal.reason}_`;
+
+        await this.telegramService.sendMessage(message);
+      } catch (error) {
+        // Fallback jika terjadi error saat mengambil data awal
+        await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
+        logger.error('Could not send detailed start notification:', error);
+      }
     }
 
     this.runTick();
@@ -65,14 +84,21 @@ export class BotService {
       currentPosition: this.currentPosition,
     };
   }
+
   private async closePosition(order: Order, reason: string) {
     if (!this.currentPosition) return;
 
     const { symbol, entryPrice } = this.currentPosition;
-    // [DIPERBAIKI] Beri nilai default untuk properti dari order
     const exitPrice = order.average || order.price || 0;
     const quantity = order.filled || 0;
     const fee = order.fee?.cost || 0;
+
+    if (entryPrice === 0 || quantity === 0) {
+        logger.error('Cannot calculate PnL due to zero entry price or quantity.');
+        await this.openPositionRepo.deletePosition();
+        this.currentPosition = null;
+        return;
+    }
 
     const pnl = (exitPrice - entryPrice) * quantity;
     const pnlPercentage = (pnl / (entryPrice * quantity)) * 100;
@@ -143,7 +169,6 @@ export class BotService {
           
           const order = await this.orderService.placeMarketOrder(symbol, 'buy', amountToSpend, currentPrice);
 
-          // [DIPERBAIKI] Beri nilai default untuk properti dari order
           const entryPrice = order.average || order.price || 0;
           const quantity = order.filled || 0;
           const fee = order.fee?.cost || 0;
