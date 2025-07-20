@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { BotConfig } from '@shared/interfaces/trading.interface'; // Diperbarui
+import { BotConfig } from '@shared/interfaces/trading.interface';
 import { logger } from '@infrastructure/logger';
 
-// [DIPERBAIKI] Menggunakan BotConfig dan menambahkan default untuk strategyName
+// [DIPERBAIKI] Tambahkan default untuk parameter MACD
 const defaultConfig: BotConfig = {
   tradingSymbol: 'BTC/USDT',
   strategyName: 'RSI',
@@ -10,6 +10,9 @@ const defaultConfig: BotConfig = {
   overboughtThreshold: 70,
   oversoldThreshold: 30,
   timeframe: '1h',
+  macdFastPeriod: 12,
+  macdSlowPeriod: 26,
+  macdSignalPeriod: 9,
   stopLossPercentage: 0,
   takeProfitPercentage: 0,
 };
@@ -23,7 +26,6 @@ export class ConfigurationRepository {
     this.prisma = new PrismaClient();
   }
 
-  // [DIPERBAIKI] Menggunakan BotConfig
   public async readConfig(): Promise<BotConfig> {
     try {
       let config = await this.prisma.configuration.findUnique({
@@ -41,7 +43,6 @@ export class ConfigurationRepository {
       }
 
       logger.info('Configuration loaded from database.');
-      // Kembalikan semua parameter sebagai BotConfig
       return {
         tradingSymbol: config.tradingSymbol,
         strategyName: config.strategyName,
@@ -49,6 +50,9 @@ export class ConfigurationRepository {
         overboughtThreshold: config.overboughtThreshold,
         oversoldThreshold: config.oversoldThreshold,
         timeframe: config.timeframe,
+         macdFastPeriod: config.macdFastPeriod,
+        macdSlowPeriod: config.macdSlowPeriod,
+        macdSignalPeriod: config.macdSignalPeriod,
         stopLossPercentage: config.stopLossPercentage,
         takeProfitPercentage: config.takeProfitPercentage,
       };
@@ -58,7 +62,6 @@ export class ConfigurationRepository {
     }
   }
 
-  // [DIPERBAIKI] Menggunakan BotConfig
   public async writeConfig(config: BotConfig): Promise<void> {
     try {
       await this.prisma.configuration.upsert({

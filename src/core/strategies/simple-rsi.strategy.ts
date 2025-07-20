@@ -20,6 +20,9 @@ export class SimpleRSIStrategy {
       takeProfitPercentage: 0,
       tradingSymbol: 'BTC/USDT',
       strategyName: 'RSI',
+      macdFastPeriod: 12,
+      macdSlowPeriod: 26,
+      macdSignalPeriod: 9,
     };
     this.validateParams();
   }

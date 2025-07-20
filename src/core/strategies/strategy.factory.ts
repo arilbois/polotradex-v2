@@ -1,19 +1,14 @@
 import { IStrategy } from './IStrategy';
 import { SimpleRSIStrategy } from './simple-rsi.strategy';
+import { MACDStrategy } from './macd.strategy'; // Baru
 import { logger } from '@infrastructure/logger';
 
-// Peta yang berisi semua strategi yang tersedia di aplikasi.
-// Kunci adalah nama strategi (string), dan nilai adalah kelasnya.
+// [DIPERBAIKI] Daftarkan strategi MACD yang baru
 const strategies: { [key: string]: new () => IStrategy } = {
   RSI: SimpleRSIStrategy,
-  // Di masa depan, Anda bisa menambahkan strategi baru di sini:
-  // MACD: MACDStrategy,
+  MACD: MACDStrategy, // Baru
 };
 
-/**
- * Factory (pabrik) yang bertanggung jawab untuk membuat instance
- * dari sebuah strategi berdasarkan namanya.
- */
 export class StrategyFactory {
   public static createStrategy(name: string): IStrategy {
     const StrategyClass = strategies[name];

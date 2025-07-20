@@ -10,18 +10,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model Configuration {
   id                  String   @id @default("main_config")
   
   tradingSymbol       String   @default("BTC/USDT")
-
   strategyName        String   @default("RSI")
 
-  // Parameter strategi
+  // Parameter strategi RSI
   rsiPeriod           Int
   overboughtThreshold Int
   oversoldThreshold   Int
   timeframe           String
+
+  // [BARU] Parameter strategi MACD
+  macdFastPeriod      Int      @default(12)
+  macdSlowPeriod      Int      @default(26)
+  macdSignalPeriod    Int      @default(9)
 
   // Parameter Manajemen Risiko
   stopLossPercentage  Float    @default(0)
