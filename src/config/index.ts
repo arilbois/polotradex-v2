@@ -15,6 +15,10 @@ const config = {
     apiKey: process.env.BINANCE_API_KEY_TESTNET || '',
     apiSecret: process.env.BINANCE_API_SECRET_TESTNET || '',
   },
+  telegram: {
+    token: process.env.TELEGRAM_BOT_TOKEN || '',
+    chatId: process.env.TELEGRAM_CHAT_ID || '',
+  },
 };
 
 export default config;

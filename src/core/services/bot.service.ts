@@ -1,71 +1,81 @@
 import { logger } from '@infrastructure/logger';
 import TradingService from '@modules/trading/trading.service';
+import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
+import { TelegramService } from './telegram.service'; // Baru
 
-const TICK_INTERVAL = 15000; // Jalankan setiap 15 detik untuk testing
+const TICK_INTERVAL = 15000;
 
 export class BotService {
-  private tradingService: TradingService;
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
 
-  constructor(tradingService: TradingService) {
-    this.tradingService = tradingService;
-  }
+  constructor(
+    private tradingService: TradingService,
+    private tradeLogRepo: TradeLogRepository,
+    private telegramService: TelegramService // Baru
+  ) {}
 
-  public start(): void {
+  public async start(): Promise<void> {
     if (this.isRunning) {
       logger.warn('Bot is already running.');
       return;
     }
-
     logger.info('Starting bot...');
     this.isRunning = true;
-    // Jalankan tick pertama segera, lalu set interval
+    await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
     this.runTick();
     this.intervalId = setInterval(this.runTick, TICK_INTERVAL);
     logger.info(`Bot started. Tick interval: ${TICK_INTERVAL / 1000} seconds.`);
   }
 
-  public stop(): void {
+  public async stop(): Promise<void> {
     if (!this.isRunning) {
       logger.warn('Bot is not running.');
       return;
     }
-
     logger.info('Stopping bot...');
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
+    if (this.intervalId) clearInterval(this.intervalId);
     this.intervalId = null;
     this.isRunning = false;
+    await this.telegramService.sendMessage('🛑 *Bot Stopped*\nBot has been stopped manually.');
     logger.info('Bot stopped.');
   }
 
   public getStatus() {
-    return {
-      isRunning: this.isRunning,
-      tickInterval: TICK_INTERVAL,
-    };
+    return { isRunning: this.isRunning, tickInterval: TICK_INTERVAL };
   }
 
-  // Gunakan arrow function untuk memastikan 'this' merujuk ke instance BotService
   private runTick = async (): Promise<void> => {
     logger.info('--- Bot Tick Running ---');
     try {
-      // Di masa depan, simbol bisa diambil dari konfigurasi
       const symbol = 'BTC/USDT';
       const signal = await this.tradingService.getTradingSignal(symbol);
 
       logger.info(`[TICK] Signal for ${symbol}: ${signal.action} | Reason: ${signal.reason}`);
 
-      // Di sini adalah tempat untuk logika eksekusi trade
       if (signal.action === 'BUY' || signal.action === 'SELL') {
         logger.info(`[TRADE EXECUTION] Action: ${signal.action} for ${symbol}. (Simulation)`);
-        // Contoh: await this.tradingService.placeOrder(symbol, signal.action, amount);
+        
+        const tradeData = {
+          symbol: symbol,
+          action: signal.action,
+          reason: signal.reason,
+          price: signal.metadata.rsi,
+          quantity: 1,
+        };
+        
+        await this.tradeLogRepo.createLog(tradeData);
+        
+        // Kirim notifikasi Telegram
+        const emoji = signal.action === 'BUY' ? '🟢' : '🔴';
+        const message = `${emoji} *${signal.action} Signal Executed* \n\n*Symbol:* ${symbol}\n*Reason:* ${signal.reason}`;
+        await this.telegramService.sendMessage(message);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error in tick';
       logger.error(`[TICK] An error occurred: ${errorMessage}`);
+      // Kirim notifikasi error ke Telegram
+      await this.telegramService.sendMessage(`❌ *An Error Occurred*\n\n${errorMessage}`);
     }
   };
 }

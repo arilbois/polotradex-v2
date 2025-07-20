@@ -1,38 +1,29 @@
-/**
- * src/container.ts
- * Wadah Dependency Injection (DI) sederhana.
- */
 import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
 import TradingService from '@modules/trading/trading.service';
 import ConfigurationService from '@modules/configuration/configuration.service';
-import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository'; // [DIPERBAIKI] Diaktifkan kembali
+import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository';
 import { BotService } from '@core/services/bot.service';
 import { logger } from '@infrastructure/logger';
-import { BalanceService } from '@core/services/balance.service';
 import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
+import { BalanceService } from '@core/services/balance.service';
+import { TelegramService } from '@core/services/telegram.service'; // Baru
 
-// --- Inisialisasi dari Bawah ke Atas ---
+// --- Inisialisasi ---
 
-// 1. Repositories (Lapisan data)
-export const configurationRepository = new ConfigurationRepository(); // [DIPERBAIKI] Diaktifkan kembali
+export const configurationRepository = new ConfigurationRepository();
 export const tradeLogRepository = new TradeLogRepository();
 
-// 2. Core Logic (Strategi)
 export const rsiStrategy = new SimpleRSIStrategy();
 export const balanceService = new BalanceService();
+export const telegramService = new TelegramService(); // Baru
 
-// 3. Services (Menggunakan Repositories dan Strategi)
-// Inisialisasi Service dengan dependensi yang dibutuhkan.
 export const tradingService = new TradingService(rsiStrategy);
-// [DIPERBAIKI] Berikan repository ke ConfigurationService
 export const configurationService = new ConfigurationService(rsiStrategy, configurationRepository);
-
-// Inisialisasi Bot Service dengan Trading Service
-export const botService = new BotService(tradingService);
+// [DIPERBAIKI] Berikan dependensi baru ke BotService
+export const botService = new BotService(tradingService, tradeLogRepository, telegramService);
 
 
 // --- Sinkronisasi Konfigurasi Awal ---
-// [DIPERBAIKI] Fungsionalitas ini diaktifkan kembali
 async function syncInitialConfig() {
   try {
     logger.info('Syncing initial configuration from database...');
@@ -41,9 +32,8 @@ async function syncInitialConfig() {
     logger.info('Initial configuration synced successfully.');
   } catch (error) {
     logger.error('FATAL: Could not sync initial configuration.', error);
-    process.exit(1); // Hentikan aplikasi jika konfigurasi awal gagal dimuat
+    process.exit(1);
   }
 }
 
-// Jalankan sinkronisasi saat container diimpor untuk pertama kali.
 syncInitialConfig();
