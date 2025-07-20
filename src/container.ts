@@ -8,14 +8,18 @@ import ConfigurationService from '@modules/configuration/configuration.service';
 import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository'; // [DIPERBAIKI] Diaktifkan kembali
 import { BotService } from '@core/services/bot.service';
 import { logger } from '@infrastructure/logger';
+import { BalanceService } from '@core/services/balance.service';
+import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
 
 // --- Inisialisasi dari Bawah ke Atas ---
 
 // 1. Repositories (Lapisan data)
 export const configurationRepository = new ConfigurationRepository(); // [DIPERBAIKI] Diaktifkan kembali
+export const tradeLogRepository = new TradeLogRepository();
 
 // 2. Core Logic (Strategi)
 export const rsiStrategy = new SimpleRSIStrategy();
+export const balanceService = new BalanceService();
 
 // 3. Services (Menggunakan Repositories dan Strategi)
 // Inisialisasi Service dengan dependensi yang dibutuhkan.

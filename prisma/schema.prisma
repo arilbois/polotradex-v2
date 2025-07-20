@@ -21,3 +21,13 @@ model Configuration {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+model TradeLog {
+  id        String   @id @default(cuid()) // ID unik untuk setiap log
+  symbol    String   // Contoh: "BTC/USDT"
+  action    String   // "BUY" atau "SELL"
+  reason    String   // Alasan dari strategi, misal: "RSI oversold (28.5)"
+  price     Float    // Harga eksekusi (simulasi)
+  quantity  Float    // Jumlah yang dibeli/dijual (simulasi)
+  timestamp DateTime @default(now())
+}
