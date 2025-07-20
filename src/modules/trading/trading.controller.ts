@@ -5,8 +5,8 @@ import { logger } from '@infrastructure/logger';
 class TradingController {
   private tradingService: TradingService;
 
-  constructor() {
-    this.tradingService = new TradingService();
+  constructor(tradingService: TradingService) {
+    this.tradingService = tradingService;
   }
 
   // Bind 'this' untuk memastikan konteks yang benar saat dipanggil oleh router

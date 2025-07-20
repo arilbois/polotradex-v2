@@ -8,8 +8,8 @@ class TradingService {
   private rsiStrategy: SimpleRSIStrategy;
   private exchange: Exchange;
 
-   constructor() {
-    this.rsiStrategy = new SimpleRSIStrategy();
+   constructor(rsiStrategy: SimpleRSIStrategy) {
+    this.rsiStrategy = rsiStrategy; // Menerima instance dari luar
 
     // Tentukan opsi untuk exchange berdasarkan konfigurasi
     const exchangeOptions = {

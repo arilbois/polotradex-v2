@@ -6,8 +6,8 @@ import { UpdateConfigurationDto } from './configuration.dto';
 class ConfigurationController {
   private configurationService: ConfigurationService;
 
-  constructor() {
-    this.configurationService = new ConfigurationService();
+  constructor(configurationService: ConfigurationService) {
+    this.configurationService = configurationService;
   }
 
   public getConfiguration = (req: Request, res: Response): void => {

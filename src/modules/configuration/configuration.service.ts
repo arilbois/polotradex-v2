@@ -2,52 +2,29 @@ import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
 import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
 import { UpdateConfigurationDto } from './configuration.dto';
 
-// !! PENTING: Untuk sementara, kita buat state di sini.
-// Ini BUKAN praktik terbaik untuk produksi karena state tidak akan tersinkronisasi
-// jika aplikasi memiliki beberapa instance. Di fase selanjutnya, kita akan memindahkan
-// state ini ke database (seperti Redis atau file JSON) agar persisten.
-// Untuk tujuan belajar, pendekatan ini sudah cukup.
-
-// "Singleton" manual untuk menyimpan instance strategi
-let rsiStrategyInstance: SimpleRSIStrategy | null = null;
-
-const getRsiStrategyInstance = () => {
-  if (!rsiStrategyInstance) {
-    rsiStrategyInstance = new SimpleRSIStrategy();
-  }
-  return rsiStrategyInstance;
-};
-
-
 class ConfigurationService {
   private rsiStrategy: SimpleRSIStrategy;
 
-  constructor() {
-    this.rsiStrategy = getRsiStrategyInstance();
+  // Terima strategi melalui constructor
+  constructor(rsiStrategy: SimpleRSIStrategy) {
+    this.rsiStrategy = rsiStrategy;
   }
 
+  /**
+   * [DIPERBAIKI] Mengambil konfigurasi langsung dari instance strategi.
+   * Tidak ada lagi data hardcode.
+   */
   public getCurrentConfig(): RSIStrategyParams {
-    // Kita perlu menambahkan method getParams() di SimpleRSIStrategy
-    // Untuk sekarang, kita akan mock data ini.
-    return {
-        rsiPeriod: 14,
-        overboughtThreshold: 70,
-        oversoldThreshold: 30,
-        timeframe: '1h',
-    };
+    return this.rsiStrategy.getParams();
   }
 
+  /**
+   * [DIPERBAIKI] Memperbarui konfigurasi pada instance strategi yang sama.
+   * Sekarang benar-benar memanggil metode updateParams.
+   */
   public updateConfig(newConfig: UpdateConfigurationDto): RSIStrategyParams {
-    // Kita perlu menambahkan method updateParams() di SimpleRSIStrategy
-    // Untuk sekarang, kita hanya log saja
-    console.log('Updating config with:', newConfig);
-    return {
-        rsiPeriod: newConfig.rsiPeriod || 14,
-        overboughtThreshold: newConfig.overboughtThreshold || 70,
-        oversoldThreshold: newConfig.oversoldThreshold || 30,
-        timeframe: newConfig.timeframe || '1h',
-    };
+    this.rsiStrategy.updateParams(newConfig);
+    return this.rsiStrategy.getParams();
   }
 }
-
 export default ConfigurationService;
