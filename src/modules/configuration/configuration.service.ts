@@ -1,42 +1,56 @@
-import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
 import { BotConfig } from '@shared/interfaces/trading.interface';
 import { UpdateConfigurationDto } from './configuration.dto';
 import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository';
+import { StrategyManager } from '@core/services/strategy.manager';
+import { TelegramService } from '@core/services/telegram.service';
+import { logger } from '@infrastructure/logger';
 
 class ConfigurationService {
-  private rsiStrategy: SimpleRSIStrategy;
-  private repository: ConfigurationRepository;
+  constructor(
+    private strategyManager: StrategyManager,
+    private repository: ConfigurationRepository,
+    private telegramService: TelegramService
+  ) {}
 
-  // [DIPERBAIKI] Constructor sekarang menerima repository sebagai argumen kedua
-  constructor(rsiStrategy: SimpleRSIStrategy, repository: ConfigurationRepository) {
-    this.rsiStrategy = rsiStrategy;
-    this.repository = repository;
-  }
-
-  /**
-   * Mengambil konfigurasi dari file melalui repository.
-   */
   public async getCurrentConfig(): Promise<BotConfig> {
     return this.repository.readConfig();
   }
 
-  /**
-   * Memperbarui konfigurasi pada strategi dan menyimpannya ke file.
-   */
-  public async updateConfig(newConfig: UpdateConfigurationDto): Promise<BotConfig> {
-    // 1. Dapatkan konfigurasi saat ini dari DB
+  public async updateConfig(newConfigDto: UpdateConfigurationDto): Promise<BotConfig> {
     const currentConfig = await this.repository.readConfig();
-    
-    // 2. Gabungkan dengan perubahan baru
-    const updatedConfig = { ...currentConfig, ...newConfig };
+    const updatedConfig = { ...currentConfig, ...newConfigDto };
 
-    // 3. Perbarui state di dalam memori (strategi)
-    this.rsiStrategy.updateParams(updatedConfig);
+    this.strategyManager.updateActiveStrategy(updatedConfig);
     
-    // 4. Simpan konfigurasi baru ke DB
     await this.repository.writeConfig(updatedConfig);
     
+    await this.sendConfigChangeNotification(currentConfig, updatedConfig);
+    
     return updatedConfig;
+  }
+
+  private async sendConfigChangeNotification(oldConfig: BotConfig, newConfig: BotConfig) {
+    try {
+      let changes = '';
+      // [DIPERBAIKI] Gunakan 'keyof BotConfig' untuk iterasi yang aman secara tipe
+      for (const key of Object.keys(newConfig) as Array<keyof BotConfig>) {
+        if (oldConfig[key] !== newConfig[key]) {
+          changes += `\n- *${this.formatKey(key)}:* ~${oldConfig[key]}~ -> *${newConfig[key]}*`;
+        }
+      }
+
+      if (changes) {
+        const message = `⚙️ *Configuration Updated*${changes}`;
+        await this.telegramService.sendMessage(message);
+      }
+    } catch (error) {
+        logger.error('Failed to send config change notification:', error);
+    }
+  }
+
+  private formatKey(key: string): string {
+    const result = key.replace(/([A-Z])/g, ' $1');
+    return result.charAt(0).toUpperCase() + result.slice(1);
   }
 }
 

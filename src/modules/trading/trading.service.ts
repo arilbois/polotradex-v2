@@ -1,15 +1,14 @@
 import ccxt, { Exchange } from 'ccxt';
-import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
 import { StrategySignal } from '@shared/interfaces/trading.interface';
 import { logger } from '@infrastructure/logger';
 import config from '@config/index';
+import { StrategyManager } from '@core/services/strategy.manager'; 
 
 class TradingService {
-  private rsiStrategy: SimpleRSIStrategy;
   private exchange: Exchange;
 
-  constructor(rsiStrategy: SimpleRSIStrategy) {
-    this.rsiStrategy = rsiStrategy;
+  // [DIPERBAIKI] Constructor sekarang menerima StrategyManager
+  constructor(private strategyManager: StrategyManager) {
     const exchangeOptions = {
       apiKey: config.isTestnet ? config.binanceTestnet.apiKey : config.binance.apiKey,
       secret: config.isTestnet ? config.binanceTestnet.apiSecret : config.binance.apiSecret,
@@ -19,17 +18,17 @@ class TradingService {
   }
 
   public async getTradingSignal(symbol: string): Promise<StrategySignal> {
-    logger.info(`[Service] Generating signal for ${symbol}`);
-    const signal = await this.rsiStrategy.generateSignal(this.exchange, symbol);
+    // Dapatkan strategi yang aktif dari manager
+    const activeStrategy = this.strategyManager.getActiveStrategy();
+    logger.info(`[Service] Generating signal for ${symbol} using ${activeStrategy.constructor.name}`);
+    const signal = await activeStrategy.generateSignal(this.exchange, symbol);
     return signal;
   }
 
   public async getCurrentPrice(symbol: string): Promise<number> {
     try {
       const ticker = await this.exchange.fetchTicker(symbol);
-      if (!ticker.last) {
-        throw new Error(`Could not fetch last price for ${symbol}`);
-      }
+      if (!ticker.last) throw new Error(`Could not fetch last price for ${symbol}`);
       return ticker.last;
     } catch (error) {
       logger.error(`Failed to fetch current price for ${symbol}:`, error);
@@ -37,4 +36,5 @@ class TradingService {
     }
   }
 }
+
 export default TradingService;
