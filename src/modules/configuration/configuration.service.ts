@@ -1,30 +1,43 @@
 import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
 import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
 import { UpdateConfigurationDto } from './configuration.dto';
+import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository';
 
 class ConfigurationService {
   private rsiStrategy: SimpleRSIStrategy;
+  private repository: ConfigurationRepository;
 
-  // Terima strategi melalui constructor
-  constructor(rsiStrategy: SimpleRSIStrategy) {
+  // [DIPERBAIKI] Constructor sekarang menerima repository sebagai argumen kedua
+  constructor(rsiStrategy: SimpleRSIStrategy, repository: ConfigurationRepository) {
     this.rsiStrategy = rsiStrategy;
+    this.repository = repository;
   }
 
   /**
-   * [DIPERBAIKI] Mengambil konfigurasi langsung dari instance strategi.
-   * Tidak ada lagi data hardcode.
+   * Mengambil konfigurasi dari file melalui repository.
    */
-  public getCurrentConfig(): RSIStrategyParams {
-    return this.rsiStrategy.getParams();
+  public async getCurrentConfig(): Promise<RSIStrategyParams> {
+    return this.repository.readConfig();
   }
 
   /**
-   * [DIPERBAIKI] Memperbarui konfigurasi pada instance strategi yang sama.
-   * Sekarang benar-benar memanggil metode updateParams.
+   * Memperbarui konfigurasi pada strategi dan menyimpannya ke file.
    */
-  public updateConfig(newConfig: UpdateConfigurationDto): RSIStrategyParams {
-    this.rsiStrategy.updateParams(newConfig);
-    return this.rsiStrategy.getParams();
+  public async updateConfig(newConfig: UpdateConfigurationDto): Promise<RSIStrategyParams> {
+    // 1. Dapatkan konfigurasi saat ini dari DB
+    const currentConfig = await this.repository.readConfig();
+    
+    // 2. Gabungkan dengan perubahan baru
+    const updatedConfig = { ...currentConfig, ...newConfig };
+
+    // 3. Perbarui state di dalam memori (strategi)
+    this.rsiStrategy.updateParams(updatedConfig);
+    
+    // 4. Simpan konfigurasi baru ke DB
+    await this.repository.writeConfig(updatedConfig);
+    
+    return updatedConfig;
   }
 }
+
 export default ConfigurationService;

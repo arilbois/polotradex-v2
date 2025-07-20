@@ -10,9 +10,10 @@ class ConfigurationController {
     this.configurationService = configurationService;
   }
 
-  public getConfiguration = (req: Request, res: Response): void => {
+  // [DIPERBAIKI] Tambahkan async/await karena service sekarang berinteraksi dengan DB
+  public getConfiguration = async (req: Request, res: Response): Promise<void> => {
     try {
-      const config = this.configurationService.getCurrentConfig();
+      const config = await this.configurationService.getCurrentConfig();
       res.status(200).json(config);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -21,11 +22,11 @@ class ConfigurationController {
     }
   };
 
-  public updateConfiguration = (req: Request, res: Response): void => {
+  // [DIPERBAIKI] Tambahkan async/await karena service sekarang berinteraksi dengan DB
+  public updateConfiguration = async (req: Request, res: Response): Promise<void> => {
     try {
       const configDto: UpdateConfigurationDto = req.body;
-      
-      const updatedConfig = this.configurationService.updateConfig(configDto);
+      const updatedConfig = await this.configurationService.updateConfig(configDto);
       logger.info(`[ConfigController] Configuration updated successfully.`);
       res.status(200).json({
         message: 'Configuration updated successfully',
