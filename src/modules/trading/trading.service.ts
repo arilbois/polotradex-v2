@@ -8,33 +8,33 @@ class TradingService {
   private rsiStrategy: SimpleRSIStrategy;
   private exchange: Exchange;
 
-   constructor(rsiStrategy: SimpleRSIStrategy) {
-    this.rsiStrategy = rsiStrategy; // Menerima instance dari luar
-
-    // Tentukan opsi untuk exchange berdasarkan konfigurasi
+  constructor(rsiStrategy: SimpleRSIStrategy) {
+    this.rsiStrategy = rsiStrategy;
     const exchangeOptions = {
       apiKey: config.isTestnet ? config.binanceTestnet.apiKey : config.binance.apiKey,
       secret: config.isTestnet ? config.binanceTestnet.apiSecret : config.binance.apiSecret,
     };
-
-    // Inisialisasi exchange dengan opsi yang sudah ditentukan
     this.exchange = new ccxt.binance(exchangeOptions);
-
-    // Aktifkan sandbox mode jika IS_TESTNET bernilai true
-    if (config.isTestnet) {
-      this.exchange.setSandboxMode(true);
-      logger.info('[Service] TradingService initialized in TESTNET mode.');
-    } else {
-      logger.info('[Service] TradingService initialized in PRODUCTION mode.');
-    }
+    if (config.isTestnet) this.exchange.setSandboxMode(true);
   }
 
   public async getTradingSignal(symbol: string): Promise<StrategySignal> {
     logger.info(`[Service] Generating signal for ${symbol}`);
-    // Delegasikan pembuatan sinyal ke kelas strategi
     const signal = await this.rsiStrategy.generateSignal(this.exchange, symbol);
     return signal;
   }
-}
 
+  public async getCurrentPrice(symbol: string): Promise<number> {
+    try {
+      const ticker = await this.exchange.fetchTicker(symbol);
+      if (!ticker.last) {
+        throw new Error(`Could not fetch last price for ${symbol}`);
+      }
+      return ticker.last;
+    } catch (error) {
+      logger.error(`Failed to fetch current price for ${symbol}:`, error);
+      throw error;
+    }
+  }
+}
 export default TradingService;

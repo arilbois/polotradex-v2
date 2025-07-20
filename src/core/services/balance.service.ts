@@ -1,4 +1,3 @@
-// src/core/services/balance.service.ts (Update)
 import ccxt, { Exchange } from 'ccxt';
 import { logger } from '@infrastructure/logger';
 import config from '@config/index';
