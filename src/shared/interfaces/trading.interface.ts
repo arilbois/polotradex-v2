@@ -18,6 +18,7 @@ export interface StrategySignal {
 }
 
 export interface RSIStrategyParams {
+  tradingSymbol: string;
   rsiPeriod: number;
   overboughtThreshold: number;
   oversoldThreshold: number;

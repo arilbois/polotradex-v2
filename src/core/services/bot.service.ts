@@ -1,7 +1,8 @@
 import { logger } from '@infrastructure/logger';
 import TradingService from '@modules/trading/trading.service';
 import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
-import { TelegramService } from './telegram.service'; // Baru
+import { TelegramService } from './telegram.service';
+import ConfigurationService from '@modules/configuration/configuration.service'; // Baru
 
 const TICK_INTERVAL = 15000;
 
@@ -11,12 +12,13 @@ export class BotService {
 
   constructor(
     private tradingService: TradingService,
+    private configService: ConfigurationService, // Baru
     private tradeLogRepo: TradeLogRepository,
-    private telegramService: TelegramService // Baru
+    private telegramService: TelegramService
   ) {}
 
   public async start(): Promise<void> {
-    if (this.isRunning) {
+   if (this.isRunning) {
       logger.warn('Bot is already running.');
       return;
     }
@@ -26,6 +28,7 @@ export class BotService {
     this.runTick();
     this.intervalId = setInterval(this.runTick, TICK_INTERVAL);
     logger.info(`Bot started. Tick interval: ${TICK_INTERVAL / 1000} seconds.`);
+ 
   }
 
   public async stop(): Promise<void> {
@@ -48,13 +51,20 @@ export class BotService {
   private runTick = async (): Promise<void> => {
     logger.info('--- Bot Tick Running ---');
     try {
-      const symbol = 'BTC/USDT';
+      const currentConfig = await this.configService.getCurrentConfig();
+      const symbol = currentConfig.tradingSymbol;
+
+      if (!symbol) {
+        logger.warn('[TICK] Trading symbol is not set in configuration. Skipping tick.');
+        return;
+      }
+
       const signal = await this.tradingService.getTradingSignal(symbol);
 
       logger.info(`[TICK] Signal for ${symbol}: ${signal.action} | Reason: ${signal.reason}`);
 
       if (signal.action === 'BUY' || signal.action === 'SELL') {
-        logger.info(`[TRADE EXECUTION] Action: ${signal.action} for ${symbol}. (Simulation)`);
+     logger.info(`[TRADE EXECUTION] Action: ${signal.action} for ${symbol}. (Simulation)`);
         
         const tradeData = {
           symbol: symbol,

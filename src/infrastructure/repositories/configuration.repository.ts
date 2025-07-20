@@ -2,15 +2,14 @@ import { PrismaClient } from '@prisma/client';
 import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
 import { logger } from '@infrastructure/logger';
 
-// Konfigurasi default jika database kosong.
 const defaultConfig: RSIStrategyParams = {
+  tradingSymbol: 'BTC/USDT',
   rsiPeriod: 14,
   overboughtThreshold: 70,
   oversoldThreshold: 30,
   timeframe: '1h',
 };
 
-// ID statis untuk satu-satunya baris konfigurasi di database.
 const CONFIG_ID = 'main_config';
 
 export class ConfigurationRepository {
@@ -20,17 +19,12 @@ export class ConfigurationRepository {
     this.prisma = new PrismaClient();
   }
 
-  /**
-   * Membaca konfigurasi dari database.
-   * Jika tidak ada, akan membuat entri baru dengan nilai default.
-   */
   public async readConfig(): Promise<RSIStrategyParams> {
     try {
       let config = await this.prisma.configuration.findUnique({
         where: { id: CONFIG_ID },
       });
 
-      // Jika tidak ada konfigurasi di DB, buat satu.
       if (!config) {
         logger.warn('No configuration found in DB, creating with default values.');
         config = await this.prisma.configuration.create({
@@ -42,8 +36,9 @@ export class ConfigurationRepository {
       }
 
       logger.info('Configuration loaded from database.');
-      // Kembalikan hanya parameter yang relevan.
+      // [DIPERBAIKI] Kembalikan semua parameter termasuk tradingSymbol
       return {
+        tradingSymbol: config.tradingSymbol,
         rsiPeriod: config.rsiPeriod,
         overboughtThreshold: config.overboughtThreshold,
         oversoldThreshold: config.oversoldThreshold,
@@ -55,18 +50,11 @@ export class ConfigurationRepository {
     }
   }
 
-  /**
-   * Menulis (memperbarui atau membuat) konfigurasi ke database.
-   * @param config - Objek konfigurasi yang akan disimpan.
-   */
   public async writeConfig(config: RSIStrategyParams): Promise<void> {
     try {
-      // Gunakan 'upsert' untuk memperbarui jika ada, atau membuat jika tidak ada.
       await this.prisma.configuration.upsert({
         where: { id: CONFIG_ID },
-        update: {
-          ...config,
-        },
+        update: config,
         create: {
           id: CONFIG_ID,
           ...config,

@@ -6,7 +6,8 @@ import { BotService } from '@core/services/bot.service';
 import { logger } from '@infrastructure/logger';
 import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
 import { BalanceService } from '@core/services/balance.service';
-import { TelegramService } from '@core/services/telegram.service'; // Baru
+import { TelegramService } from '@core/services/telegram.service';
+import { PnlService } from '@core/services/pnl.service';
 
 // --- Inisialisasi ---
 
@@ -15,12 +16,13 @@ export const tradeLogRepository = new TradeLogRepository();
 
 export const rsiStrategy = new SimpleRSIStrategy();
 export const balanceService = new BalanceService();
-export const telegramService = new TelegramService(); // Baru
+export const telegramService = new TelegramService();
+export const pnlService = new PnlService(tradeLogRepository);
 
 export const tradingService = new TradingService(rsiStrategy);
 export const configurationService = new ConfigurationService(rsiStrategy, configurationRepository);
-// [DIPERBAIKI] Berikan dependensi baru ke BotService
-export const botService = new BotService(tradingService, tradeLogRepository, telegramService);
+// [DIPERBAIKI] Berikan ConfigurationService ke BotService agar bisa membaca config
+export const botService = new BotService(tradingService, configurationService, tradeLogRepository, telegramService);
 
 
 // --- Sinkronisasi Konfigurasi Awal ---
