@@ -17,6 +17,8 @@ model Configuration {
   overboughtThreshold Int
   oversoldThreshold   Int
   timeframe           String
+  stopLossPercentage  Float    @default(0)
+  takeProfitPercentage Float   @default(0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

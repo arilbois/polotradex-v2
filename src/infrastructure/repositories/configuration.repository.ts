@@ -2,12 +2,15 @@ import { PrismaClient } from '@prisma/client';
 import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
 import { logger } from '@infrastructure/logger';
 
+// [DIPERBAIKI] Tambahkan parameter manajemen risiko ke konfigurasi default
 const defaultConfig: RSIStrategyParams = {
   tradingSymbol: 'BTC/USDT',
   rsiPeriod: 14,
   overboughtThreshold: 70,
   oversoldThreshold: 30,
   timeframe: '1h',
+  stopLossPercentage: 0, // Tidak aktif secara default
+  takeProfitPercentage: 0, // Tidak aktif secara default
 };
 
 const CONFIG_ID = 'main_config';
@@ -36,13 +39,15 @@ export class ConfigurationRepository {
       }
 
       logger.info('Configuration loaded from database.');
-      // [DIPERBAIKI] Kembalikan semua parameter termasuk tradingSymbol
+      // [DIPERBAIKI] Kembalikan semua parameter
       return {
         tradingSymbol: config.tradingSymbol,
         rsiPeriod: config.rsiPeriod,
         overboughtThreshold: config.overboughtThreshold,
         oversoldThreshold: config.oversoldThreshold,
         timeframe: config.timeframe,
+        stopLossPercentage: config.stopLossPercentage,
+        takeProfitPercentage: config.takeProfitPercentage,
       };
     } catch (error) {
       logger.error('Failed to read config from database:', error);

@@ -4,4 +4,6 @@ export interface UpdateConfigurationDto {
   overboughtThreshold?: number;
   oversoldThreshold?: number;
   timeframe?: string;
+  stopLossPercentage?: number;
+  takeProfitPercentage?: number;
 }

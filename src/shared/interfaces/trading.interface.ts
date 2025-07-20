@@ -23,4 +23,6 @@ export interface RSIStrategyParams {
   overboughtThreshold: number;
   oversoldThreshold: number;
   timeframe: string;
+  stopLossPercentage: number;
+  takeProfitPercentage: number;
 }
