@@ -30,3 +30,13 @@ model TradeLog {
   quantity  Float    // Jumlah yang dibeli/dijual (simulasi)
   timestamp DateTime @default(now())
 }
+
+model OpenPosition {
+  // Kita hanya akan punya satu posisi aktif, jadi ID-nya bisa statis.
+  id         String   @id @default("active_position")
+
+  symbol     String
+  entryPrice Float
+  quantity   Float
+  timestamp  DateTime
+}

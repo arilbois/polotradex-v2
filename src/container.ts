@@ -8,11 +8,14 @@ import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repos
 import { BalanceService } from '@core/services/balance.service';
 import { TelegramService } from '@core/services/telegram.service';
 import { PnlService } from '@core/services/pnl.service';
+import { OpenPositionRepository } from '@infrastructure/repositories/open-position.repository'; // Baru
+
 
 // --- Inisialisasi ---
 
 export const configurationRepository = new ConfigurationRepository();
 export const tradeLogRepository = new TradeLogRepository();
+export const openPositionRepository = new OpenPositionRepository();
 
 export const rsiStrategy = new SimpleRSIStrategy();
 export const balanceService = new BalanceService();
@@ -22,7 +25,7 @@ export const pnlService = new PnlService(tradeLogRepository);
 export const tradingService = new TradingService(rsiStrategy);
 export const configurationService = new ConfigurationService(rsiStrategy, configurationRepository);
 // [DIPERBAIKI] Berikan ConfigurationService ke BotService agar bisa membaca config
-export const botService = new BotService(tradingService, configurationService, tradeLogRepository, telegramService);
+export const botService = new BotService(tradingService, configurationService, tradeLogRepository,openPositionRepository, telegramService);
 
 
 // --- Sinkronisasi Konfigurasi Awal ---

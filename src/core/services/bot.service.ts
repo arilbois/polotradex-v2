@@ -3,27 +3,20 @@ import TradingService from '@modules/trading/trading.service';
 import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repository';
 import { TelegramService } from './telegram.service';
 import ConfigurationService from '@modules/configuration/configuration.service';
+import { OpenPositionRepository, PositionData } from '@infrastructure/repositories/open-position.repository';
 
 const TICK_INTERVAL = 15000;
-
-// Interface untuk menyimpan state posisi yang terbuka
-interface OpenPosition {
-  symbol: string;
-  entryPrice: number;
-  quantity: number;
-  timestamp: Date;
-}
 
 export class BotService {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
-  // [BARU] State untuk menyimpan posisi yang sedang terbuka
-  private currentPosition: OpenPosition | null = null;
+  private currentPosition: PositionData | null = null;
 
   constructor(
     private tradingService: TradingService,
     private configService: ConfigurationService,
     private tradeLogRepo: TradeLogRepository,
+    private openPositionRepo: OpenPositionRepository,
     private telegramService: TelegramService
   ) {}
 
@@ -34,9 +27,14 @@ export class BotService {
     }
     logger.info('Starting bot...');
     this.isRunning = true;
-    // Saat start, pastikan tidak ada posisi terbuka
-    this.currentPosition = null; 
-    await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
+
+    this.currentPosition = await this.openPositionRepo.readPosition();
+    if (this.currentPosition) {
+      await this.telegramService.sendMessage(`✅ *Bot Resumed*\nFound active position for ${this.currentPosition.symbol}. Resuming monitoring.`);
+    } else {
+      await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
+    }
+
     this.runTick();
     this.intervalId = setInterval(this.runTick, TICK_INTERVAL);
     logger.info(`Bot started. Tick interval: ${TICK_INTERVAL / 1000} seconds.`);
@@ -70,72 +68,53 @@ export class BotService {
       const symbol = currentConfig.tradingSymbol;
 
       if (!symbol) {
-        logger.warn('[TICK] Trading symbol is not set. Skipping tick.');
+        logger.warn('[TICK] Trading symbol is not set in configuration. Skipping tick.');
         return;
       }
 
-      // --- LOGIKA JIKA SEDANG MEMILIKI POSISI ---
       if (this.currentPosition) {
         const currentPrice = await this.tradingService.getCurrentPrice(symbol);
         const pnl = (currentPrice - this.currentPosition.entryPrice) * this.currentPosition.quantity;
         const pnlPercentage = (pnl / (this.currentPosition.entryPrice * this.currentPosition.quantity)) * 100;
-
         logger.info(`[POSITION] Holding ${symbol}. Entry: ${this.currentPosition.entryPrice}, Current: ${currentPrice}, PnL: ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`);
-
+        
         const signal = await this.tradingService.getTradingSignal(symbol);
         if (signal.action === 'SELL') {
-          logger.info(`[EXECUTION] SELL signal received for open position. Closing position...`);
-          
-          const tradeData = {
+          await this.tradeLogRepo.createLog({
             symbol: symbol,
-            action: signal.action,
+            action: 'SELL',
             reason: signal.reason,
-            price: currentPrice, // Gunakan harga saat ini untuk simulasi
+            price: currentPrice,
             quantity: this.currentPosition.quantity,
-          };
-          
-          await this.tradeLogRepo.createLog(tradeData);
+          });
           
           const emoji = '🔴';
-          const message = `${emoji} *SELL Executed* \n\n*Symbol:* ${symbol}\n*Price:* ${currentPrice}\n*Reason:* ${signal.reason}\n*Realized PnL:* ${pnl.toFixed(4)}`;
+          const message = `${emoji} *SELL Executed* \n\n*Symbol:* ${symbol}\n*Price:* ${currentPrice.toFixed(4)}\n*Reason:* ${signal.reason}\n*Realized PnL:* ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`;
           await this.telegramService.sendMessage(message);
 
-          // [PENTING] Kosongkan posisi setelah menjual
+          await this.openPositionRepo.deletePosition();
           this.currentPosition = null;
         }
-      } 
-      // --- LOGIKA JIKA TIDAK MEMILIKI POSISI ---
-      else {
-        logger.info(`[IDLE] Waiting for BUY signal for ${symbol}...`);
-
-        // Hanya cari sinyal BUY jika tidak punya posisi
+      } else {
         const signal = await this.tradingService.getTradingSignal(symbol);
         if (signal.action === 'BUY') {
           const entryPrice = await this.tradingService.getCurrentPrice(symbol);
-          const quantity = 1; // Kuantitas simulasi
+          const quantity = 1;
 
-          logger.info(`[EXECUTION] BUY signal received. Opening new position for ${symbol} at ${entryPrice}`);
+          this.currentPosition = { symbol, entryPrice, quantity, timestamp: new Date() };
 
-          // [PENTING] Set posisi saat ini setelah membeli
-          this.currentPosition = {
-            symbol,
-            entryPrice,
-            quantity,
-            timestamp: new Date(),
-          };
-
-          const tradeData = {
+          await this.openPositionRepo.savePosition(this.currentPosition);
+          
+          await this.tradeLogRepo.createLog({
             symbol: symbol,
-            action: signal.action,
+            action: 'BUY',
             reason: signal.reason,
             price: entryPrice,
             quantity: quantity,
-          };
-          
-          await this.tradeLogRepo.createLog(tradeData);
+          });
 
           const emoji = '🟢';
-          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${symbol}\n*Price:* ${entryPrice}\n*Reason:* ${signal.reason}`;
+          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${symbol}\n*Price:* ${entryPrice.toFixed(4)}\n*Reason:* ${signal.reason}`;
           await this.telegramService.sendMessage(message);
         }
       }
