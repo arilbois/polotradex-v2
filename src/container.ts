@@ -11,6 +11,7 @@ import { PnlService } from '@core/services/pnl.service';
 import { OpenPositionRepository } from '@infrastructure/repositories/open-position.repository';
 import { StrategyManager } from '@core/services/strategy.manager';
 import { BotConfig } from '@shared/interfaces/trading.interface';
+import { BacktestService } from '@core/services/backtest.service';
 
 // --- Variabel Global untuk Dependensi ---
 // [DIPERBAIKI] Tambahkan 'export' agar bisa diimpor oleh file lain.
@@ -18,6 +19,7 @@ let strategyManager: StrategyManager;
 export let tradingService: TradingService;
 export let configurationService: ConfigurationService;
 export let botService: BotService;
+export let backtestService: BacktestService; 
 
 // --- Repositories & Service tanpa dependensi kompleks ---
 export const configurationRepository = new ConfigurationRepository();
@@ -58,6 +60,8 @@ async function initializeContainer() {
       openPositionRepository,
       telegramService
     );
+    
+    backtestService = new BacktestService(strategyManager, configurationRepository);
     
     logger.info('Dependency container initialized successfully.');
 
