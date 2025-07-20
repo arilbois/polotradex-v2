@@ -1,5 +1,5 @@
 import { SimpleRSIStrategy } from '@core/strategies/simple-rsi.strategy';
-import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
+import { BotConfig } from '@shared/interfaces/trading.interface';
 import { UpdateConfigurationDto } from './configuration.dto';
 import { ConfigurationRepository } from '@infrastructure/repositories/configuration.repository';
 
@@ -16,14 +16,14 @@ class ConfigurationService {
   /**
    * Mengambil konfigurasi dari file melalui repository.
    */
-  public async getCurrentConfig(): Promise<RSIStrategyParams> {
+  public async getCurrentConfig(): Promise<BotConfig> {
     return this.repository.readConfig();
   }
 
   /**
    * Memperbarui konfigurasi pada strategi dan menyimpannya ke file.
    */
-  public async updateConfig(newConfig: UpdateConfigurationDto): Promise<RSIStrategyParams> {
+  public async updateConfig(newConfig: UpdateConfigurationDto): Promise<BotConfig> {
     // 1. Dapatkan konfigurasi saat ini dari DB
     const currentConfig = await this.repository.readConfig();
     

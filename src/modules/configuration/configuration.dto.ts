@@ -1,5 +1,6 @@
 export interface UpdateConfigurationDto {
   tradingSymbol?: string;
+  strategyName?: string;
   rsiPeriod?: number;
   overboughtThreshold?: number;
   oversoldThreshold?: number;

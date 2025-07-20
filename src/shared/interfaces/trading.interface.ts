@@ -17,8 +17,9 @@ export interface StrategySignal {
   metadata?: any;
 }
 
-export interface RSIStrategyParams {
+export interface BotConfig {
   tradingSymbol: string;
+  strategyName: string;
   rsiPeriod: number;
   overboughtThreshold: number;
   oversoldThreshold: number;

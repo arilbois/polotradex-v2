@@ -1,12 +1,12 @@
 // src/core/strategies/simple-rsi.strategy.ts
 import { RSI } from 'technicalindicators';
 import ccxt, { Exchange } from 'ccxt';
-import { StrategySignal, OHLCV, RSIStrategyParams } from '@shared/interfaces/trading.interface';
+import { StrategySignal, OHLCV, BotConfig } from '@shared/interfaces/trading.interface';
 import { logger } from '@infrastructure/logger';
 import { UpdateConfigurationDto } from '@modules/configuration/configuration.dto';
 
 export class SimpleRSIStrategy {
-  private params: RSIStrategyParams;
+  private params: BotConfig;
   private botId: string;
 
   constructor(botId = 'default-bot') {
@@ -16,6 +16,10 @@ export class SimpleRSIStrategy {
       overboughtThreshold: 70,
       oversoldThreshold: 30,
       timeframe: '1h',
+      stopLossPercentage: 0,
+      takeProfitPercentage: 0,
+      tradingSymbol: 'BTC/USDT',
+      strategyName: 'RSI',
     };
     this.validateParams();
   }
@@ -80,11 +84,11 @@ export class SimpleRSIStrategy {
     return { action: 'HOLD', confidence: 0.5, reason: `RSI neutral (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI } };
   }
 
-  public getParams(): RSIStrategyParams {
+  public getParams(): BotConfig {
     return { ...this.params };
   }
 
-  public updateParams(newParams: Partial<RSIStrategyParams>): void {
+      public updateParams(newParams: Partial<BotConfig>): void {
     this.params = { ...this.params, ...newParams };
     this.validateParams(); 
     

@@ -1,16 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import { RSIStrategyParams } from '@shared/interfaces/trading.interface';
+import { BotConfig } from '@shared/interfaces/trading.interface'; // Diperbarui
 import { logger } from '@infrastructure/logger';
 
-// [DIPERBAIKI] Tambahkan parameter manajemen risiko ke konfigurasi default
-const defaultConfig: RSIStrategyParams = {
+// [DIPERBAIKI] Menggunakan BotConfig dan menambahkan default untuk strategyName
+const defaultConfig: BotConfig = {
   tradingSymbol: 'BTC/USDT',
+  strategyName: 'RSI',
   rsiPeriod: 14,
   overboughtThreshold: 70,
   oversoldThreshold: 30,
   timeframe: '1h',
-  stopLossPercentage: 0, // Tidak aktif secara default
-  takeProfitPercentage: 0, // Tidak aktif secara default
+  stopLossPercentage: 0,
+  takeProfitPercentage: 0,
 };
 
 const CONFIG_ID = 'main_config';
@@ -22,7 +23,8 @@ export class ConfigurationRepository {
     this.prisma = new PrismaClient();
   }
 
-  public async readConfig(): Promise<RSIStrategyParams> {
+  // [DIPERBAIKI] Menggunakan BotConfig
+  public async readConfig(): Promise<BotConfig> {
     try {
       let config = await this.prisma.configuration.findUnique({
         where: { id: CONFIG_ID },
@@ -39,9 +41,10 @@ export class ConfigurationRepository {
       }
 
       logger.info('Configuration loaded from database.');
-      // [DIPERBAIKI] Kembalikan semua parameter
+      // Kembalikan semua parameter sebagai BotConfig
       return {
         tradingSymbol: config.tradingSymbol,
+        strategyName: config.strategyName,
         rsiPeriod: config.rsiPeriod,
         overboughtThreshold: config.overboughtThreshold,
         oversoldThreshold: config.oversoldThreshold,
@@ -55,7 +58,8 @@ export class ConfigurationRepository {
     }
   }
 
-  public async writeConfig(config: RSIStrategyParams): Promise<void> {
+  // [DIPERBAIKI] Menggunakan BotConfig
+  public async writeConfig(config: BotConfig): Promise<void> {
     try {
       await this.prisma.configuration.upsert({
         where: { id: CONFIG_ID },
