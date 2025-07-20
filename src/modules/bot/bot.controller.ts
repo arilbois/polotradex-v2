@@ -1,38 +1,39 @@
 import { Request, Response } from 'express';
-import { BotService } from '@core/services/bot.service';
-import { logger } from '@infrastructure/logger';
+import { botService } from '../../container'; // Impor service-nya
 
 export class BotController {
-  private botService: BotService;
+  // Constructor tidak lagi memerlukan dependensi
+  constructor() {}
 
-  constructor(botService: BotService) {
-    this.botService = botService;
-  }
-
-  public start = (req: Request, res: Response): void => {
+  // Setiap metode sekarang mengakses botService langsung dari container
+  public start = async (req: Request, res: Response): Promise<void> => {
     try {
-      this.botService.start();
+      // Pada saat API ini dipanggil, botService dijamin sudah ada
+      await botService.start();
       res.status(200).json({ message: 'Bot started successfully.' });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to start bot.' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to start bot: ${errorMessage}` });
     }
   };
 
-  public stop = (req: Request, res: Response): void => {
+  public stop = async (req: Request, res: Response): Promise<void> => {
     try {
-      this.botService.stop();
+      await botService.stop();
       res.status(200).json({ message: 'Bot stopped successfully.' });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to stop bot.' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to stop bot: ${errorMessage}` });
     }
   };
   
   public status = (req: Request, res: Response): void => {
     try {
-      const status = this.botService.getStatus();
+      const status = botService.getStatus();
       res.status(200).json(status);
     } catch (error) {
-      res.status(500).json({ message: 'Failed to get bot status.' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Failed to get bot status: ${errorMessage}` });
     }
   };
 }

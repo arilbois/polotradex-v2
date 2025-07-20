@@ -4,6 +4,9 @@ import { TradeLogRepository } from '@infrastructure/repositories/trade-log.repos
 import { TelegramService } from './telegram.service';
 import ConfigurationService from '@modules/configuration/configuration.service';
 import { OpenPositionRepository, PositionData } from '@infrastructure/repositories/open-position.repository';
+import { OrderService } from './order.service';
+import { BalanceService } from './balance.service';
+import { Order } from 'ccxt';
 
 const TICK_INTERVAL = 15000;
 
@@ -17,6 +20,8 @@ export class BotService {
     private configService: ConfigurationService,
     private tradeLogRepo: TradeLogRepository,
     private openPositionRepo: OpenPositionRepository,
+    private orderService: OrderService,
+    private balanceService: BalanceService,
     private telegramService: TelegramService
   ) {}
 
@@ -60,25 +65,29 @@ export class BotService {
       currentPosition: this.currentPosition,
     };
   }
-  
-  // Method terpusat untuk menutup posisi
-  private async closePosition(currentPrice: number, reason: string) {
+  private async closePosition(order: Order, reason: string) {
     if (!this.currentPosition) return;
-    
-    const { symbol, entryPrice, quantity } = this.currentPosition;
-    const pnl = (currentPrice - entryPrice) * quantity;
+
+    const { symbol, entryPrice } = this.currentPosition;
+    // [DIPERBAIKI] Beri nilai default untuk properti dari order
+    const exitPrice = order.average || order.price || 0;
+    const quantity = order.filled || 0;
+    const fee = order.fee?.cost || 0;
+
+    const pnl = (exitPrice - entryPrice) * quantity;
     const pnlPercentage = (pnl / (entryPrice * quantity)) * 100;
 
     await this.tradeLogRepo.createLog({
       symbol,
       action: 'SELL',
       reason,
-      price: currentPrice,
+      price: exitPrice,
       quantity,
+      fee,
     });
-    
+
     const emoji = pnl >= 0 ? '💰' : '🔻';
-    const message = `${emoji} *Position Closed* \n\n*Symbol:* ${symbol}\n*Price:* ${currentPrice.toFixed(4)}\n*Reason:* ${reason}\n*Realized PnL:* ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`;
+    const message = `${emoji} *Position Closed* \n\n*Symbol:* ${symbol}\n*Price:* ${exitPrice.toFixed(4)}\n*Reason:* ${reason}\n*Realized PnL:* ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`;
     await this.telegramService.sendMessage(message);
 
     await this.openPositionRepo.deletePosition();
@@ -91,67 +100,79 @@ export class BotService {
     try {
       const currentConfig = await this.configService.getCurrentConfig();
       const symbol = currentConfig.tradingSymbol;
+      const [base, quote] = symbol.split('/');
 
       if (!symbol) {
         logger.warn('[TICK] Trading symbol is not set in configuration. Skipping tick.');
         return;
       }
 
-      // --- LOGIKA JIKA SEDANG MEMILIKI POSISI ---
       if (this.currentPosition) {
         const currentPrice = await this.tradingService.getCurrentPrice(symbol);
-        const { entryPrice } = this.currentPosition;
-        const { stopLossPercentage, takeProfitPercentage } = currentConfig;
-
-        // [LOGIKA BARU] Cek Stop Loss
-        if (stopLossPercentage > 0) {
-          const stopLossPrice = entryPrice * (1 - stopLossPercentage / 100);
-          if (currentPrice <= stopLossPrice) {
-            await this.closePosition(currentPrice, `Stop Loss triggered at ${stopLossPrice.toFixed(4)}`);
-            return; // Hentikan tick ini karena posisi sudah ditutup
-          }
-        }
-
-        // [LOGIKA BARU] Cek Take Profit
-        if (takeProfitPercentage > 0) {
-          const takeProfitPrice = entryPrice * (1 + takeProfitPercentage / 100);
-          if (currentPrice >= takeProfitPrice) {
-            await this.closePosition(currentPrice, `Take Profit triggered at ${takeProfitPrice.toFixed(4)}`);
-            return; // Hentikan tick ini karena posisi sudah ditutup
-          }
+        const { entryPrice, quantity } = this.currentPosition;
+        
+        if (currentConfig.stopLossPercentage > 0 && currentPrice <= entryPrice * (1 - currentConfig.stopLossPercentage / 100)) {
+          const order = await this.orderService.placeMarketOrder(symbol, 'sell', quantity, currentPrice);
+          await this.closePosition(order, `Stop Loss triggered`);
+          return;
         }
         
-        // Jika SL/TP tidak kena, lanjutkan cek sinyal strategi
-        const pnl = (currentPrice - entryPrice) * this.currentPosition.quantity;
-        const pnlPercentage = (pnl / (entryPrice * this.currentPosition.quantity)) * 100;
-        logger.info(`[POSITION] Holding ${symbol}. Entry: ${entryPrice}, Current: ${currentPrice}, PnL: ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`);
-        
+        if (currentConfig.takeProfitPercentage > 0 && currentPrice >= entryPrice * (1 + currentConfig.takeProfitPercentage / 100)) {
+          const order = await this.orderService.placeMarketOrder(symbol, 'sell', quantity, currentPrice);
+          await this.closePosition(order, `Take Profit triggered`);
+          return;
+        }
+
         const signal = await this.tradingService.getTradingSignal(symbol);
         if (signal.action === 'SELL') {
-          await this.closePosition(currentPrice, `Strategy Signal: ${signal.reason}`);
+          const order = await this.orderService.placeMarketOrder(symbol, 'sell', quantity, currentPrice);
+          await this.closePosition(order, `Strategy Signal: ${signal.reason}`);
         }
-      } 
-      // --- LOGIKA JIKA TIDAK MEMILIKI POSISI ---
-      else {
+
+      } else {
         const signal = await this.tradingService.getTradingSignal(symbol);
         if (signal.action === 'BUY') {
-          const entryPrice = await this.tradingService.getCurrentPrice(symbol);
-          const quantity = 1; // Kuantitas simulasi
+          const currentPrice = await this.tradingService.getCurrentPrice(symbol);
+          
+          const quoteBalance = await this.balanceService.getBalance(quote);
+          if (quoteBalance.free <= 1) {
+            logger.warn(`[TICK] Saldo ${quote} tidak cukup untuk membeli. Saldo: ${quoteBalance.free}`);
+            return;
+          }
+          const amountToSpend = (quoteBalance.free * currentConfig.orderPercentage) / 100;
+          
+          const order = await this.orderService.placeMarketOrder(symbol, 'buy', amountToSpend, currentPrice);
 
-          this.currentPosition = { symbol, entryPrice, quantity, timestamp: new Date() };
+          // [DIPERBAIKI] Beri nilai default untuk properti dari order
+          const entryPrice = order.average || order.price || 0;
+          const quantity = order.filled || 0;
+          const fee = order.fee?.cost || 0;
+
+          if (quantity === 0) {
+            logger.error('[TICK] Buy order was placed but resulted in 0 quantity. Aborting position open.');
+            return;
+          }
+
+          this.currentPosition = {
+            symbol: order.symbol,
+            entryPrice,
+            quantity,
+            timestamp: new Date(order.timestamp),
+          };
 
           await this.openPositionRepo.savePosition(this.currentPosition);
           
           await this.tradeLogRepo.createLog({
-            symbol: symbol,
+            symbol: order.symbol,
             action: 'BUY',
             reason: signal.reason,
             price: entryPrice,
-            quantity: quantity,
+            quantity,
+            fee,
           });
 
           const emoji = '🟢';
-          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${symbol}\n*Price:* ${entryPrice.toFixed(4)}\n*Reason:* ${signal.reason}`;
+          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${order.symbol}\n*Amount:* ${quantity.toFixed(6)} ${base}\n*Price:* ${entryPrice.toFixed(4)}\n*Cost:* ~$${order.cost?.toFixed(2)} ${quote}`;
           await this.telegramService.sendMessage(message);
         }
       }

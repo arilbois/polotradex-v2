@@ -23,6 +23,7 @@ export class SimpleRSIStrategy {
       macdFastPeriod: 12,
       macdSlowPeriod: 26,
       macdSignalPeriod: 9,
+      orderPercentage: 50,
     };
     this.validateParams();
   }
@@ -44,7 +45,7 @@ export class SimpleRSIStrategy {
 
       if (ohlcvData.length < this.params.rsiPeriod) {
         logger.warn(`Insufficient data for RSI calculation. Need ${this.params.rsiPeriod}, got ${ohlcvData.length}`);
-        return { action: 'HOLD', confidence: 0, reason: 'Insufficient data', timestamp: new Date() };
+        return { action: 'HOLD', confidence: 0, reason: 'Insufficient data', timestamp: new Date(), OrderAmount: 0 };
       }
 
       const closePrices = ohlcvData.map(c => c.close);
@@ -55,7 +56,7 @@ export class SimpleRSIStrategy {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       logger.error(`Failed to generate RSI signal for ${symbol}:`, error);
-      return { action: 'HOLD', confidence: 0, reason: `Error: ${errorMessage}`, timestamp: new Date() };
+      return { action: 'HOLD', confidence: 0, reason: `Error: ${errorMessage}`, timestamp: new Date(), OrderAmount: 0 };
     }
   }
 
@@ -79,12 +80,12 @@ export class SimpleRSIStrategy {
 
   private analyzeRSI(currentRSI: number): StrategySignal {
     if (currentRSI <= this.params.oversoldThreshold) {
-      return { action: 'BUY', confidence: 0.75, reason: `RSI oversold (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI } };
+      return { action: 'BUY', confidence: 0.75, reason: `RSI oversold (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI }, OrderAmount: 0 };
     }
     if (currentRSI >= this.params.overboughtThreshold) {
-      return { action: 'SELL', confidence: 0.75, reason: `RSI overbought (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI } };
+      return { action: 'SELL', confidence: 0.75, reason: `RSI overbought (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI }, OrderAmount: 0 };
     }
-    return { action: 'HOLD', confidence: 0.5, reason: `RSI neutral (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI } };
+    return { action: 'HOLD', confidence: 0.5, reason: `RSI neutral (${currentRSI.toFixed(2)})`, timestamp: new Date(), metadata: { rsi: currentRSI }, OrderAmount: 0   };
   }
 
   public getParams(): BotConfig {

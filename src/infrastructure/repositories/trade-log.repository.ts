@@ -1,4 +1,3 @@
-// src/infrastructure/repositories/trade-log.repository.ts
 import { PrismaClient, TradeLog } from '@prisma/client';
 import { logger } from '@infrastructure/logger';
 
@@ -8,6 +7,7 @@ export interface CreateTradeLogDto {
   reason: string;
   price: number;
   quantity: number;
+  fee?: number;
 }
 
 export class TradeLogRepository {

@@ -1,10 +1,11 @@
-// src/modules/bot/bot.route.ts
+// File: src/modules/bot/bot.route.ts
+
 import { Router } from 'express';
 import { BotController } from './bot.controller';
-import { botService } from '../../container';
 
 const router = Router();
-const botController = new BotController(botService);
+// Controller sekarang dibuat tanpa argumen
+const botController = new BotController();
 
 router.post('/start', botController.start);
 router.post('/stop', botController.stop);

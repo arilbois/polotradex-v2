@@ -12,5 +12,5 @@ export interface UpdateConfigurationDto {
   macdSignalPeriod?: number;
   // Risk Management
   stopLossPercentage?: number;
-  takeProfitPercentage?: number;
+  orderPercentage?: number;
 }

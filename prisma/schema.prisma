@@ -17,6 +17,8 @@ model Configuration {
   tradingSymbol       String   @default("BTC/USDT")
   strategyName        String   @default("RSI")
 
+  orderPercentage     Float    @default(50)
+
   // Parameter strategi RSI
   rsiPeriod           Int
   overboughtThreshold Int
@@ -43,6 +45,7 @@ model TradeLog {
   reason    String   // Alasan dari strategi, misal: "RSI oversold (28.5)"
   price     Float    // Harga eksekusi (simulasi)
   quantity  Float    // Jumlah yang dibeli/dijual (simulasi)
+  fee       Float    @default(0)
   timestamp DateTime @default(now())
 }
 

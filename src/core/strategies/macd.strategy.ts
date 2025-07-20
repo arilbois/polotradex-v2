@@ -44,7 +44,7 @@ export class MACDStrategy implements IStrategy {
 
       const macdValues = MACD.calculate(macdInput);
       if (macdValues.length < 2) {
-        return { action: 'HOLD', confidence: 0, reason: 'Insufficient data for MACD calculation', timestamp: new Date() };
+        return { action: 'HOLD', confidence: 0, reason: 'Insufficient data for MACD calculation', timestamp: new Date(), OrderAmount: 0 };
       }
 
       // Ambil dua data terakhir untuk mendeteksi persilangan
@@ -56,7 +56,7 @@ export class MACDStrategy implements IStrategy {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error(`Failed to generate MACD signal for ${symbol}:`, errorMessage);
-      return { action: 'HOLD', confidence: 0, reason: `Error: ${errorMessage}`, timestamp: new Date() };
+      return { action: 'HOLD', confidence: 0, reason: `Error: ${errorMessage}`, timestamp: new Date(), OrderAmount: 0 };
     }
   }
 
@@ -82,14 +82,14 @@ export class MACDStrategy implements IStrategy {
 
     // Golden Cross (Sinyal Beli): Garis MACD memotong ke atas garis sinyal
     if (prevMACD < prevSignal && lastMACD > lastSignal) {
-      return { action: 'BUY', confidence: 0.75, reason: 'MACD Golden Cross', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal } };
+      return { action: 'BUY', confidence: 0.75, reason: 'MACD Golden Cross', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal }, OrderAmount: 0 };
     }
 
     // Death Cross (Sinyal Jual): Garis MACD memotong ke bawah garis sinyal
     if (prevMACD > prevSignal && lastMACD < lastSignal) {
-      return { action: 'SELL', confidence: 0.75, reason: 'MACD Death Cross', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal } };
+      return { action: 'SELL', confidence: 0.75, reason: 'MACD Death Cross', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal }, OrderAmount: 0 };
     }
     
-    return { action: 'HOLD', confidence: 0.5, reason: 'No MACD crossover', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal } };
+    return { action: 'HOLD', confidence: 0.5, reason: 'No MACD crossover', timestamp: new Date(), metadata: { macd: lastMACD, signal: lastSignal }, OrderAmount: 0 };
   }
 }

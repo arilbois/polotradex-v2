@@ -15,6 +15,7 @@ const defaultConfig: BotConfig = {
   macdSignalPeriod: 9,
   stopLossPercentage: 0,
   takeProfitPercentage: 0,
+  orderPercentage: 50,
 };
 
 const CONFIG_ID = 'main_config';
@@ -55,6 +56,7 @@ export class ConfigurationRepository {
         macdSignalPeriod: config.macdSignalPeriod,
         stopLossPercentage: config.stopLossPercentage,
         takeProfitPercentage: config.takeProfitPercentage,
+        orderPercentage: config.orderPercentage,
       };
     } catch (error) {
       logger.error('Failed to read config from database:', error);

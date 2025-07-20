@@ -15,6 +15,7 @@ export interface StrategySignal {
   reason: string;
   timestamp: Date;
   metadata?: any;
+  OrderAmount: number;
 }
 
 export interface BotConfig {
@@ -32,4 +33,5 @@ export interface BotConfig {
   // Risk Management
   stopLossPercentage: number;
   takeProfitPercentage: number;
-}
+  orderPercentage: number;
+  }
