@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import ConfigurationController from './configuration.controller';
-import { configurationService } from '../../container';
+import { ConfigurationController } from './configuration.controller';
 
 const router = Router();
-const configurationController = new ConfigurationController(configurationService);
+// Controller sekarang dibuat tanpa argumen
+const configurationController = new ConfigurationController();
 
 router.get('/', configurationController.getConfiguration);
 router.put('/', configurationController.updateConfiguration);
