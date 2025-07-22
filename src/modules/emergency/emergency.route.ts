@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { EmergencyController } from './emergency.controller';
-import { emergencyService } from '../../container';
 
 const router = Router();
-const emergencyController = new EmergencyController(emergencyService);
+const emergencyController = new EmergencyController();
 
 router.post('/buy', emergencyController.emergencyBuy);
 router.post('/sell', emergencyController.emergencySell);
