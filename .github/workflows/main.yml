@@ -3,7 +3,7 @@ name: Deploy to VPS
 on:
   push:
     branches:
-      - main
+      - main  # Atau 'main' jika Anda menggunakan itu
   workflow_dispatch:
 
 jobs:
@@ -14,28 +14,44 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Deploy via SSH
+      - name: Deploy and Restart App
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_KEY }}
-          port: 22
+          port: 22 # Port SSH default, bisa disesuaikan
           script: |
-            cd ~/bot/polotradex-v2
-            git pull origin main
-            npm install --production
-            pm2 start ecosystem.config.js --only polotradex
+            # 1. Masuk ke direktori proyek
+            cd /var/www/polotradex  # Ganti dengan path proyek Anda di VPS
 
-      - name: Send Telegram Notification
+            # 2. Ambil perubahan terbaru dari branch main
+            git pull origin main
+
+            # 3. Install semua dependensi (termasuk dev dependencies untuk build)
+            npm install
+
+            # 4. Terapkan migrasi database jika ada perubahan skema
+            npx prisma migrate deploy
+
+            # 5. Build ulang aplikasi TypeScript ke JavaScript
+            npm run build
+
+            # 6. Restart aplikasi menggunakan PM2 dengan zero-downtime reload
+            # Perintah ini akan menjalankan 'start' jika belum ada, atau 'reload' jika sudah berjalan.
+            pm2 startOrReload ecosystem.config.js --env production
+
+      - name: Send Success Notification
+        # Langkah ini hanya berjalan jika semua langkah sebelumnya berhasil
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
           -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-          -d text="✅ Deploy PoloTradeX ke VPS selesai! 🎉"
+          -d text="✅ Deploy PoloTradeX ke VPS berhasil! 🎉"
 
-      - name: Notify on failure
+      - name: Send Failure Notification
+        # Langkah ini hanya berjalan jika ada langkah yang gagal
         if: failure()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage \
           -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-          -d text="❌ Deploy PoloTradeX gagal! Cek GitHub Actions."
+          -d text="❌ Deploy PoloTradeX gagal! Cek log di GitHub Actions."
