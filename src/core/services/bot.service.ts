@@ -10,6 +10,14 @@ import { Order } from 'ccxt';
 
 const TICK_INTERVAL = 15000;
 
+const formatPrice = (price: number): string => {
+  if (price === 0) return '0.00';
+    if (price < 1) {
+      return parseFloat(price.toFixed(10)).toString();
+    }
+  return price.toFixed(6);
+};
+
 export class BotService {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
@@ -37,7 +45,6 @@ export class BotService {
     if (this.currentPosition) {
       await this.telegramService.sendMessage(`✅ *Bot Resumed*\nFound active position for ${this.currentPosition.symbol}. Resuming monitoring.`);
     } else {
-      // [DIPERBAIKI] Kirim notifikasi yang lebih informatif
       try {
         const config = await this.configService.getCurrentConfig();
         const symbol = config.tradingSymbol;
@@ -48,12 +55,11 @@ export class BotService {
                         `*Symbol:* ${symbol}\n` +
                         `*Strategy:* ${config.strategyName}\n` +
                         `*Status:* Waiting for BUY signal\n` +
-                        `*Current Price:* ${currentPrice.toFixed(4)}\n` +
+                        `*Current Price:* ${formatPrice(currentPrice)}\n` +
                         `*Initial Reason:* _${initialSignal.reason}_`;
 
         await this.telegramService.sendMessage(message);
       } catch (error) {
-        // Fallback jika terjadi error saat mengambil data awal
         await this.telegramService.sendMessage('✅ *Bot Started*\nBot is now running and monitoring the market.');
         logger.error('Could not send detailed start notification:', error);
       }
@@ -113,7 +119,7 @@ export class BotService {
     });
 
     const emoji = pnl >= 0 ? '💰' : '🔻';
-    const message = `${emoji} *Position Closed* \n\n*Symbol:* ${symbol}\n*Price:* ${exitPrice.toFixed(4)}\n*Reason:* ${reason}\n*Realized PnL:* ${pnl.toFixed(4)} (${pnlPercentage.toFixed(2)}%)`;
+    const message = `${emoji} *Position Closed* \n\n*Symbol:* ${symbol}\n*Price:* ${formatPrice(exitPrice)}\n*Reason:* ${reason}\n*Realized PnL:* ${formatPrice(pnl)} (${pnlPercentage.toFixed(2)}%)`;
     await this.telegramService.sendMessage(message);
 
     await this.openPositionRepo.deletePosition();
@@ -153,6 +159,19 @@ export class BotService {
         if (signal.action === 'SELL') {
           const order = await this.orderService.placeMarketOrder(symbol, 'sell', quantity, currentPrice);
           await this.closePosition(order, `Strategy Signal: ${signal.reason}`);
+        }
+
+        if (currentConfig.isMonitoringEnabled) {
+          const pnl = (currentPrice - entryPrice) * quantity;
+          const pnlPercentage = (pnl / (entryPrice * quantity)) * 100;
+          
+          const message = `📈 *Monitoring Position*\n\n` +
+                          `*Symbol:* ${symbol}\n` +
+                          `*Entry Price:* ${formatPrice(entryPrice)}\n` +
+                          `*Current Price:* ${formatPrice(currentPrice)}\n` +
+                          `*Unrealized PnL:* ${formatPrice(pnl)} (${pnlPercentage.toFixed(2)}%)`;
+          
+          await this.telegramService.sendMessage(message);
         }
 
       } else {
@@ -197,7 +216,7 @@ export class BotService {
           });
 
           const emoji = '🟢';
-          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${order.symbol}\n*Amount:* ${quantity.toFixed(6)} ${base}\n*Price:* ${entryPrice.toFixed(4)}\n*Cost:* ~$${order.cost?.toFixed(2)} ${quote}`;
+          const message = `${emoji} *BUY Executed* \n\n*Symbol:* ${order.symbol}\n*Amount:* ${quantity.toFixed(6)} ${base}\n*Price:* ${formatPrice(entryPrice)}\n*Cost:* ~$${order.cost?.toFixed(2)} ${quote}`;
           await this.telegramService.sendMessage(message);
         }
       }

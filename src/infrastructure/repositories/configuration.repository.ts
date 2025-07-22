@@ -16,6 +16,7 @@ const defaultConfig: BotConfig = {
   stopLossPercentage: 0,
   takeProfitPercentage: 0,
   orderPercentage: 50,
+  isMonitoringEnabled: false,
 };
 
 const CONFIG_ID = 'main_config';
@@ -57,6 +58,7 @@ export class ConfigurationRepository {
         stopLossPercentage: config.stopLossPercentage,
         takeProfitPercentage: config.takeProfitPercentage,
         orderPercentage: config.orderPercentage,
+        isMonitoringEnabled: config.isMonitoringEnabled,
       };
     } catch (error) {
       logger.error('Failed to read config from database:', error);

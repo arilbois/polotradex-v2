@@ -13,4 +13,5 @@ export interface UpdateConfigurationDto {
   // Risk Management
   stopLossPercentage?: number;
   orderPercentage?: number;
+  isMonitoringEnabled?: boolean;
 }

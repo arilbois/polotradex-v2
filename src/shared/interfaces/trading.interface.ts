@@ -34,4 +34,6 @@ export interface BotConfig {
   stopLossPercentage: number;
   takeProfitPercentage: number;
   orderPercentage: number;
+
+  isMonitoringEnabled: boolean;
   }
