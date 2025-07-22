@@ -2,7 +2,8 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import apiRouter from './api';
-import { swaggerUiServe, swaggerUiSetup } from '@config/swagger'; // Baru
+import { swaggerUiServe, swaggerUiSetup } from '@config/swagger';
+import { authMiddleware } from './middlewares/auth.middleware'; 
 
 const app: Application = express();
 
@@ -19,7 +20,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use('/api', apiRouter);
+app.use('/api', authMiddleware, apiRouter);
 
 app.use('/api-docs', swaggerUiServe, swaggerUiSetup);
 

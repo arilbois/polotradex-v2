@@ -7,6 +7,11 @@ servers:
   - url: http://localhost:3000/api
     description: Server Pengembangan Lokal
 
+# [BARU] Menambahkan definisi keamanan global
+# Ini akan menerapkan Bearer Token ke SEMUA endpoint di bawah ini.
+security:
+  - bearerAuth: []
+
 tags:
   - name: Bot
     description: Kontrol utama untuk memulai, menghentikan, dan melihat status bot.
@@ -185,6 +190,13 @@ paths:
           description: Sinyal trading saat ini.
 
 components:
+  # [BARU] Menambahkan definisi skema keamanan
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # Meskipun bukan JWT, ini adalah format standar
+      description: Masukkan API Secret Key Anda.
   schemas:
     BotConfig:
       type: object
@@ -201,6 +213,7 @@ components:
         macdSignalPeriod: { type: number }
         stopLossPercentage: { type: number }
         takeProfitPercentage: { type: number }
+        isMonitoringEnabled: { type: boolean }
     UpdateConfigurationDto:
       type: object
       properties:
