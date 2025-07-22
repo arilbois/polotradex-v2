@@ -40,6 +40,8 @@ export class EmergencyService {
     };
     await this.openPositionRepo.savePosition(newPosition);
 
+    this.botService.syncPositionState();
+    
     return order;
   }
 
@@ -62,6 +64,7 @@ export class EmergencyService {
     // Hapus posisi jika menjual 100%
     if (percentage === 100) {
       await this.openPositionRepo.deletePosition();
+      this.botService.clearCurrentPosition();
     }
 
     return order;

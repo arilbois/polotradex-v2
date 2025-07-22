@@ -33,6 +33,24 @@ export class BotService {
     private telegramService: TelegramService
   ) {}
 
+   /**
+   * [BARU] Metode publik untuk membersihkan posisi dari memori.
+   * Dipanggil oleh EmergencyService setelah penjualan 100%.
+   */
+  public clearCurrentPosition(): void {
+    this.currentPosition = null;
+    logger.info('[BotService] In-memory position cleared by external service.');
+  }
+  
+  /**
+   * [BARU] Metode publik untuk menyinkronkan ulang posisi dari DB.
+   * Dipanggil oleh EmergencyService setelah pembelian darurat.
+   */
+  public async syncPositionState(): Promise<void> {
+    this.currentPosition = await this.openPositionRepo.readPosition();
+    logger.info('[BotService] In-memory position synced with database.');
+  }
+
   public async start(): Promise<void> {
     if (this.isRunning) {
       logger.warn('Bot is already running.');
