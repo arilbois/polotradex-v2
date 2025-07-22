@@ -12,6 +12,7 @@ import { StrategyManager } from '@core/services/strategy.manager';
 import { BotConfig } from '@shared/interfaces/trading.interface';
 import { OrderService } from '@core/services/order.service';
 import { EmergencyService } from '@core/services/emergency.service';
+import { BacktestService } from '@core/services/backtest.service';
 
 // --- Variabel Global untuk Dependensi ---
 let strategyManager: StrategyManager;
@@ -19,6 +20,7 @@ export let tradingService: TradingService;
 export let configurationService: ConfigurationService;
 export let botService: BotService;
 export let emergencyService: EmergencyService;
+export let backtestService: BacktestService; // [DIPERBAIKI] Tambahkan export
 
 // --- Repositories & Service tanpa dependensi kompleks ---
 export const configurationRepository = new ConfigurationRepository();
@@ -59,6 +61,8 @@ async function initializeContainer() {
     );
 
     emergencyService = new EmergencyService(botService, orderService, configurationRepository, openPositionRepository, balanceService);
+    
+    backtestService = new BacktestService(strategyManager, configurationRepository);
     
     logger.info('Dependency container initialized successfully.');
 
