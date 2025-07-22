@@ -1,0 +1,240 @@
+openapi: 3.0.0
+info:
+  title: PoloTradeX API
+  version: 1.0.0
+  description: Dokumentasi API untuk Bot Trading PoloTradeX.
+servers:
+  - url: http://localhost:3000/api
+    description: Server Pengembangan Lokal
+
+tags:
+  - name: Bot
+    description: Kontrol utama untuk memulai, menghentikan, dan melihat status bot.
+  - name: Configuration
+    description: Mengelola konfigurasi bot yang sedang berjalan.
+  - name: Account
+    description: Mengelola informasi akun seperti saldo, riwayat, dan PnL.
+  - name: Emergency
+    description: Kontrol darurat untuk intervensi manual.
+  - name: Backtest
+    description: Menjalankan simulasi strategi pada data historis.
+  - name: Notification
+    description: Mengirim notifikasi tes.
+  - name: Trading
+    description: Mendapatkan sinyal trading manual.
+
+paths:
+  /bot/start:
+    post:
+      tags: [Bot]
+      summary: Memulai bot trading.
+      responses:
+        '200':
+          description: Bot berhasil dimulai.
+  /bot/stop:
+    post:
+      tags: [Bot]
+      summary: Menghentikan bot trading.
+      responses:
+        '200':
+          description: Bot berhasil dihentikan.
+  /bot/status:
+    get:
+      tags: [Bot]
+      summary: Mendapatkan status bot saat ini.
+      responses:
+        '200':
+          description: Status bot saat ini.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotStatus'
+
+  /configuration:
+    get:
+      tags: [Configuration]
+      summary: Mendapatkan konfigurasi bot saat ini.
+      responses:
+        '200':
+          description: Konfigurasi bot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotConfig'
+    put:
+      tags: [Configuration]
+      summary: Memperbarui konfigurasi bot.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConfigurationDto'
+      responses:
+        '200':
+          description: Konfigurasi berhasil diperbarui.
+
+  /account/balance:
+    get:
+      tags: [Account]
+      summary: Mendapatkan saldo untuk aset tertentu.
+      parameters:
+        - in: query
+          name: asset
+          required: true
+          schema:
+            type: string
+            example: USDT
+      responses:
+        '200':
+          description: Saldo aset.
+  /account/trade-history:
+    get:
+      tags: [Account]
+      summary: Mendapatkan semua riwayat transaksi.
+      responses:
+        '200':
+          description: Daftar riwayat transaksi.
+  /account/pnl:
+    get:
+      tags: [Account]
+      summary: Menghitung dan mendapatkan laporan Profit and Loss (PnL).
+      responses:
+        '200':
+          description: Laporan PnL.
+
+  /emergency/buy:
+    post:
+      tags: [Emergency]
+      summary: Melakukan pembelian darurat.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmergencyActionDto'
+      responses:
+        '200':
+          description: Pembelian darurat berhasil.
+  /emergency/sell:
+    post:
+      tags: [Emergency]
+      summary: Melakukan penjualan darurat.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmergencyActionDto'
+      responses:
+        '200':
+          description: Penjualan darurat berhasil.
+  /emergency/sell-and-stop:
+    post:
+      tags: [Emergency]
+      summary: Menjual semua posisi dan menghentikan bot.
+      responses:
+        '200':
+          description: Aksi berhasil.
+
+  /backtest:
+    post:
+      tags: [Backtest]
+      summary: Menjalankan backtest pada data historis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BacktestRequestDto'
+      responses:
+        '200':
+          description: Hasil backtest.
+
+  /notification/test:
+    post:
+      tags: [Notification]
+      summary: Mengirim notifikasi tes ke Telegram.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Halo, ini adalah tes."
+      responses:
+        '200':
+          description: Notifikasi berhasil dikirim.
+
+  /trading/signal:
+    get:
+      tags: [Trading]
+      summary: Mendapatkan sinyal trading manual.
+      parameters:
+        - in: query
+          name: symbol
+          required: true
+          schema:
+            type: string
+            example: BTC/USDT
+      responses:
+        '200':
+          description: Sinyal trading saat ini.
+
+components:
+  schemas:
+    BotConfig:
+      type: object
+      properties:
+        tradingSymbol: { type: string }
+        strategyName: { type: string }
+        orderPercentage: { type: number }
+        rsiPeriod: { type: number }
+        overboughtThreshold: { type: number }
+        oversoldThreshold: { type: number }
+        timeframe: { type: string }
+        macdFastPeriod: { type: number }
+        macdSlowPeriod: { type: number }
+        macdSignalPeriod: { type: number }
+        stopLossPercentage: { type: number }
+        takeProfitPercentage: { type: number }
+    UpdateConfigurationDto:
+      type: object
+      properties:
+        tradingSymbol: { type: string }
+        strategyName: { type: string }
+        orderPercentage: { type: number }
+        # ... (dan semua properti lain dari BotConfig, dibuat opsional)
+    BotStatus:
+      type: object
+      properties:
+        isRunning: { type: boolean }
+        tickInterval: { type: number }
+        currentPosition:
+          type: object
+          properties:
+            symbol: { type: string }
+            entryPrice: { type: number }
+            quantity: { type: number }
+            timestamp: { type: string, format: date-time }
+    EmergencyActionDto:
+      type: object
+      properties:
+        percentage:
+          type: number
+          description: Persentase saldo yang akan digunakan (1-100).
+          example: 50
+    BacktestRequestDto:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          example: "2023-02-01T00:00:00Z"
