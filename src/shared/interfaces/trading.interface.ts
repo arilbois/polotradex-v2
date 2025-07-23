@@ -39,4 +39,7 @@ export interface BotConfig {
 
   srLookbackPeriod: number;
   srPivotStrength: number;
+
+  mtfTimeframe: string;
+  cooldownTicks: number;
   }

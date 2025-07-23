@@ -19,6 +19,8 @@ const defaultConfig: BotConfig = {
   isMonitoringEnabled: false,
   srLookbackPeriod: 50,
   srPivotStrength: 5,
+  mtfTimeframe: '4h',
+  cooldownTicks: 5,
 };
 
 const CONFIG_ID = 'main_config';
@@ -63,6 +65,8 @@ export class ConfigurationRepository {
         isMonitoringEnabled: config.isMonitoringEnabled,
         srLookbackPeriod: config.srLookbackPeriod,
         srPivotStrength: config.srPivotStrength,
+        mtfTimeframe: config.mtfTimeframe,
+        cooldownTicks: config.cooldownTicks,
       };
     } catch (error) {
       logger.error('Failed to read config from database:', error);

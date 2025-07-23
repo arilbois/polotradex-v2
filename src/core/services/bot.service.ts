@@ -10,6 +10,7 @@ import { Order } from 'ccxt';
 
 const TICK_INTERVAL = 15000;
 
+
 const formatPrice = (price: number): string => {
   if (price === 0) return '0.00';
     if (price < 1) {
@@ -22,6 +23,7 @@ export class BotService {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
   private currentPosition: PositionData | null = null;
+  private cooldownCounter: number = 0;
 
   constructor(
     private tradingService: TradingService,
@@ -124,6 +126,13 @@ export class BotService {
         return;
     }
 
+    const config = await this.configService.getCurrentConfig();
+    if (config.cooldownTicks > 0) {
+      this.cooldownCounter = config.cooldownTicks;
+      logger.info(`[Cooldown] Cooldown activated for ${this.cooldownCounter} ticks.`);
+      await this.telegramService.sendMessage(`⏳ *Cooldown Activated*\nBot will wait for ${this.cooldownCounter} ticks before buying again.`);
+    }
+
     const pnl = (exitPrice - entryPrice) * quantity;
     const pnlPercentage = (pnl / (entryPrice * quantity)) * 100;
 
@@ -193,6 +202,13 @@ export class BotService {
         }
 
       } else {
+        
+        if (this.cooldownCounter > 0) {
+          logger.info(`[Cooldown] Bot is in cooldown. Ticks remaining: ${this.cooldownCounter}`);
+          this.cooldownCounter--;
+          return;
+        }
+
         const signal = await this.tradingService.getTradingSignal(symbol);
         if (signal.action === 'BUY') {
           const currentPrice = await this.tradingService.getCurrentPrice(symbol);

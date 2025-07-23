@@ -27,6 +27,8 @@ export class SimpleRSIStrategy {
       isMonitoringEnabled: false,
       srLookbackPeriod: 50,
       srPivotStrength: 5,
+      mtfTimeframe: '4h',
+      cooldownTicks: 5,
     };
     this.validateParams();
   }

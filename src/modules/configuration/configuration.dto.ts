@@ -16,4 +16,6 @@ export interface UpdateConfigurationDto {
   isMonitoringEnabled?: boolean;
   srLookbackPeriod?: number;
   srPivotStrength?: number;
+  mtfTimeframe?: string;
+  cooldownTicks?: number;
 }
