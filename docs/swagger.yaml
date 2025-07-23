@@ -3,12 +3,14 @@ info:
   title: PoloTradeX API
   version: 1.0.0
   description: Dokumentasi API untuk Bot Trading PoloTradeX.
-servers:
-  - url: http://localhost:3000/api
-    description: Server Pengembangan Lokal
 
-# [BARU] Menambahkan definisi keamanan global
-# Ini akan menerapkan Bearer Token ke SEMUA endpoint di bawah ini.
+# [DIPERBAIKI] Tambahkan URL server produksi Anda
+servers:
+  - url: https://polotradex.syahril.tech/api
+    description: Server Production
+  - url: http://localhost:3000/api
+    description: Server Development
+
 security:
   - bearerAuth: []
 
@@ -29,6 +31,7 @@ tags:
     description: Mendapatkan sinyal trading manual.
 
 paths:
+  # ... (sisa dari file paths tidak perlu diubah)
   /bot/start:
     post:
       tags: [Bot]
@@ -190,12 +193,11 @@ paths:
           description: Sinyal trading saat ini.
 
 components:
-  # [BARU] Menambahkan definisi skema keamanan
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT # Meskipun bukan JWT, ini adalah format standar
+      bearerFormat: JWT
       description: Masukkan API Secret Key Anda.
   schemas:
     BotConfig:
