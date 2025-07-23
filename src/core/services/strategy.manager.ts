@@ -10,11 +10,12 @@ import { logger } from '@infrastructure/logger';
  */
 export class StrategyManager {
   private activeStrategy: IStrategy;
+  private activeStrategyName: string;
 
-  // [DIPERBAIKI] Menggunakan BotConfig
   constructor(initialConfig: BotConfig) {
-    // Buat strategi awal saat manager diinisialisasi
-    this.activeStrategy = StrategyFactory.createStrategy(initialConfig.strategyName);
+    this.activeStrategyName = initialConfig.strategyName;
+
+    this.activeStrategy = StrategyFactory.createStrategy(this.activeStrategyName);
     this.activeStrategy.updateParams(initialConfig);
   }
 
@@ -35,9 +36,14 @@ export class StrategyManager {
     const newStrategyName = newConfig.strategyName === 'RSI' ? 'SimpleRSIStrategy' : newConfig.strategyName;
 
     // Jika nama strategi berubah, buat instance baru.
-    if (!currentStrategyName.includes(newStrategyName)) {
-      logger.info(`Strategy changed from ${currentStrategyName} to ${newConfig.strategyName}. Creating new instance.`);
+    if (this.activeStrategyName !== newConfig.strategyName) {
+      logger.info(`Strategy changed from "${this.activeStrategyName}" to "${newConfig.strategyName}". Creating new instance.`);
+      
+      // Buat instance strategi baru dari pabrik
       this.activeStrategy = StrategyFactory.createStrategy(newConfig.strategyName);
+      
+      // Perbarui nama singkatan yang tersimpan
+      this.activeStrategyName = newConfig.strategyName;
     }
     
     // Selalu perbarui parameter dari strategi yang aktif.
