@@ -25,6 +25,8 @@ export class SimpleRSIStrategy {
       macdSignalPeriod: 9,
       orderPercentage: 50,
       isMonitoringEnabled: false,
+      srLookbackPeriod: 50,
+      srPivotStrength: 5,
     };
     this.validateParams();
   }

@@ -17,6 +17,8 @@ const defaultConfig: BotConfig = {
   takeProfitPercentage: 0,
   orderPercentage: 50,
   isMonitoringEnabled: false,
+  srLookbackPeriod: 50,
+  srPivotStrength: 5,
 };
 
 const CONFIG_ID = 'main_config';
@@ -59,6 +61,8 @@ export class ConfigurationRepository {
         takeProfitPercentage: config.takeProfitPercentage,
         orderPercentage: config.orderPercentage,
         isMonitoringEnabled: config.isMonitoringEnabled,
+        srLookbackPeriod: config.srLookbackPeriod,
+        srPivotStrength: config.srPivotStrength,
       };
     } catch (error) {
       logger.error('Failed to read config from database:', error);

@@ -14,4 +14,6 @@ export interface UpdateConfigurationDto {
   stopLossPercentage?: number;
   orderPercentage?: number;
   isMonitoringEnabled?: boolean;
+  srLookbackPeriod?: number;
+  srPivotStrength?: number;
 }

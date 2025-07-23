@@ -13,6 +13,7 @@ import { BotConfig } from '@shared/interfaces/trading.interface';
 import { OrderService } from '@core/services/order.service';
 import { EmergencyService } from '@core/services/emergency.service';
 import { BacktestService } from '@core/services/backtest.service';
+import { AnalysisService } from '@core/services/analysis.service';
 
 // --- Variabel Global untuk Dependensi ---
 let strategyManager: StrategyManager;
@@ -20,7 +21,9 @@ export let tradingService: TradingService;
 export let configurationService: ConfigurationService;
 export let botService: BotService;
 export let emergencyService: EmergencyService;
-export let backtestService: BacktestService; // [DIPERBAIKI] Tambahkan export
+export let backtestService: BacktestService;
+export let analysisService: AnalysisService;
+
 
 // --- Repositories & Service tanpa dependensi kompleks ---
 export const configurationRepository = new ConfigurationRepository();

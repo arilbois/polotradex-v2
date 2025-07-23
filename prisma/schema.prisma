@@ -36,6 +36,9 @@ model Configuration {
 
   isMonitoringEnabled Boolean  @default(false) 
 
+  srLookbackPeriod    Int      @default(50)  // Jumlah candle ke belakang untuk dianalisis
+  srPivotStrength     Int      @default(5)
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

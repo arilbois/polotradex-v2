@@ -36,4 +36,7 @@ export interface BotConfig {
   orderPercentage: number;
 
   isMonitoringEnabled: boolean;
+
+  srLookbackPeriod: number;
+  srPivotStrength: number;
   }
