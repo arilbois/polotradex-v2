@@ -1,12 +1,14 @@
 import { IStrategy } from './IStrategy';
 import { SimpleRSIStrategy } from './simple-rsi.strategy';
-import { MACDStrategy } from './macd.strategy'; // Baru
+import { MACDStrategy } from './macd.strategy'; 
+import { SupportResistanceStrategy } from './support-resistance.strategy';
 import { logger } from '@infrastructure/logger';
 
 // [DIPERBAIKI] Daftarkan strategi MACD yang baru
 const strategies: { [key: string]: new () => IStrategy } = {
   RSI: SimpleRSIStrategy,
-  MACD: MACDStrategy, // Baru
+  MACD: MACDStrategy,
+  SR: SupportResistanceStrategy,
 };
 
 export class StrategyFactory {
