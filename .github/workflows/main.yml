@@ -23,7 +23,7 @@ jobs:
           port: 22 # Port SSH default, bisa disesuaikan
           script: |
             # 1. Masuk ke direktori proyek
-            cd /var/www/polotradex  # Ganti dengan path proyek Anda di VPS
+            cd /var/www/polotradex-v2  # Ganti dengan path proyek Anda di VPS
 
             # 2. Ambil perubahan terbaru dari branch main
             git pull origin main
