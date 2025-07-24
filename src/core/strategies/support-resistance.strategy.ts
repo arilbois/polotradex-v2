@@ -36,6 +36,7 @@ export class SupportResistanceStrategy implements IStrategy {
     if (!this.params) throw new Error('Strategy not initialized with parameters.');
     
     try {
+      logger.info(`[${this.constructor.name}] Generating signal for ${symbol}`, { params: this.params });
       // 1. Ambil data untuk timeframe utama dan MTF
       const [ohlcvData, mtfOhlcvData] = await Promise.all([
         this.fetchOHLCVData(exchange, symbol, this.params.timeframe, this.params.srLookbackPeriod),

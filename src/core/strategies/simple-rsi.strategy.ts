@@ -45,7 +45,7 @@ export class SimpleRSIStrategy {
 
   public async generateSignal(exchange: Exchange, symbol: string): Promise<StrategySignal> {
     try {
-      logger.info(`Generating RSI signal for ${symbol}`, { botId: this.botId, symbol, params: this.params });
+      logger.info(`[${this.constructor.name}] Generating signal for ${symbol}`, { botId: this.botId, symbol, params: this.params });
       const ohlcvData = await this.fetchOHLCVData(exchange, symbol);
 
       if (ohlcvData.length < this.params.rsiPeriod) {

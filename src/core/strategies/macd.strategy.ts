@@ -29,6 +29,7 @@ export class MACDStrategy implements IStrategy {
     if (!this.params) throw new Error('Strategy not initialized with parameters.');
     
     try {
+      logger.info(`[${this.constructor.name}] Generating signal for ${symbol}`, { params: this.params });
       const ohlcvData = await this.fetchOHLCVData(exchange, symbol);
       
       const closePrices = ohlcvData.map(c => c.close);

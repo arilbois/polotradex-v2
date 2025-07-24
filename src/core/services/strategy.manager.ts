@@ -10,7 +10,7 @@ import { logger } from '@infrastructure/logger';
  */
 export class StrategyManager {
   private activeStrategy: IStrategy;
-  private activeStrategyName: string; // [BARU] Menyimpan nama singkatan dari strategi aktif
+  private activeStrategyName: string;
 
   constructor(initialConfig: BotConfig) {
     // Simpan nama singkatan dari konfigurasi awal
