@@ -22,7 +22,6 @@ export let configurationService: ConfigurationService;
 export let botService: BotService;
 export let emergencyService: EmergencyService;
 export let backtestService: BacktestService;
-export let analysisService: AnalysisService;
 
 
 // --- Repositories & Service tanpa dependensi kompleks ---
@@ -33,6 +32,7 @@ export const balanceService = new BalanceService();
 export const telegramService = new TelegramService();
 export const pnlService = new PnlService(tradeLogRepository);
 export const orderService = new OrderService();
+export const analysisService = new AnalysisService();
 
 /**
  * Fungsi inisialisasi utama.

@@ -48,7 +48,7 @@ export class ConfigurationRepository {
         });
       }
 
-      logger.info('Configuration loaded from database.');
+      logger.info(`Configuration loaded from database. Strategy: "${config.strategyName}"`);
       return {
         tradingSymbol: config.tradingSymbol,
         strategyName: config.strategyName,

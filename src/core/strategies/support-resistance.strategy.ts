@@ -25,18 +25,24 @@ export class SupportResistanceStrategy implements IStrategy {
   private params: BotConfig | null = null;
 
   constructor() {
-    logger.info('SupportResistanceStrategy instance created.');
+    logger.info('[SupportResistanceStrategy] Instance created successfully.');
   }
 
   public updateParams(params: BotConfig): void {
     this.params = params;
+    logger.info(`[SupportResistanceStrategy] Parameters updated:`, { 
+      strategyName: params.strategyName,
+      timeframe: params.timeframe,
+      srLookbackPeriod: params.srLookbackPeriod,
+      srPivotStrength: params.srPivotStrength
+    });
   }
 
   public async generateSignal(exchange: Exchange, symbol: string): Promise<StrategySignal> {
     if (!this.params) throw new Error('Strategy not initialized with parameters.');
     
     try {
-      logger.info(`[${this.constructor.name}] Generating signal for ${symbol}`, { params: this.params });
+      logger.info(`[SupportResistanceStrategy] Generating signal for ${symbol}`, { params: this.params });
       // 1. Ambil data untuk timeframe utama dan MTF
       const [ohlcvData, mtfOhlcvData] = await Promise.all([
         this.fetchOHLCVData(exchange, symbol, this.params.timeframe, this.params.srLookbackPeriod),
@@ -47,7 +53,9 @@ export class SupportResistanceStrategy implements IStrategy {
       const mtfTrend = getMtfTrend(mtfOhlcvData);
       logger.info(`[SR Strategy] MTF Trend (${this.params.mtfTimeframe}): ${mtfTrend}`);
 
+      logger.info(`[SupportResistanceStrategy] Calling analysisService.findSupportResistanceLevels...`);
       const { supports, resistances } = analysisService.findSupportResistanceLevels(ohlcvData, this.params.srPivotStrength);
+      logger.info(`[SupportResistanceStrategy] Found ${supports.length} supports and ${resistances.length} resistances`);
       const lastCandle = ohlcvData[ohlcvData.length - 1];
       const currentPrice = lastCandle.close;
 

@@ -9,14 +9,19 @@ const strategies: { [key: string]: new () => IStrategy } = {
   RSI: SimpleRSIStrategy,
   MACD: MACDStrategy,
   SR: SupportResistanceStrategy,
+  'SupportResistance': SupportResistanceStrategy, // Tambahkan alias alternatif
 };
 
 export class StrategyFactory {
   public static createStrategy(name: string): IStrategy {
+    logger.info(`[StrategyFactory] Attempting to create strategy: "${name}"`);
+    logger.info(`[StrategyFactory] Available strategies: ${Object.keys(strategies).join(', ')}`);
+    
     const StrategyClass = strategies[name];
 
     if (!StrategyClass) {
       logger.error(`Strategy "${name}" not found. Defaulting to RSI.`);
+      logger.error(`[StrategyFactory] Available strategies: ${Object.keys(strategies).join(', ')}`);
       return new SimpleRSIStrategy();
     }
 

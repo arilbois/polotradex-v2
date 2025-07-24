@@ -15,9 +15,13 @@ export class StrategyManager {
   constructor(initialConfig: BotConfig) {
     // Simpan nama singkatan dari konfigurasi awal
     this.activeStrategyName = initialConfig.strategyName;
+    logger.info(`[StrategyManager] Initializing with strategy: "${this.activeStrategyName}"`);
+    
     // Buat strategi awal
     this.activeStrategy = StrategyFactory.createStrategy(this.activeStrategyName);
     this.activeStrategy.updateParams(initialConfig);
+    
+    logger.info(`[StrategyManager] Strategy initialized: ${this.activeStrategy.constructor.name}`);
   }
 
   /**
